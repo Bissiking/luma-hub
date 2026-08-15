@@ -8,12 +8,25 @@ function kyrosFetch(url, options = {}) {
   });
 }
 
+function getHandshakeFields() {
+  return {
+    kyros_sso_version: config.kyrosSsoVersion,
+    kyros_edition: config.kyrosEdition,
+    kyros_application_scope: config.kyrosApplicationScope
+  };
+}
+
 export function buildAuthorizeUrl(state) {
   const url = new URL(config.kyrosAuthorizeUrl);
   url.searchParams.set("client_id", config.kyrosClientId);
   url.searchParams.set("redirect_uri", `${config.publicBaseUrl}/auth/callback`);
   url.searchParams.set("scope", config.kyrosRequestedScope);
   url.searchParams.set("state", state);
+
+  for (const [key, value] of Object.entries(getHandshakeFields())) {
+    url.searchParams.set(key, value);
+  }
+
   return url.toString();
 }
 
@@ -26,13 +39,17 @@ export async function exchangeAuthorizationCode(code) {
       client_id: config.kyrosClientId,
       client_secret: config.kyrosClientSecret,
       code,
-      redirect_uri: `${config.publicBaseUrl}/auth/callback`
+      redirect_uri: `${config.publicBaseUrl}/auth/callback`,
+      ...getHandshakeFields()
     })
   });
 
   const payload = await response.json().catch(() => ({}));
   if (!response.ok || payload.error) {
-    throw new Error(payload.error || `Kyros HTTP ${response.status}`);
+    const details = [payload.error, payload.expected && `expected=${payload.expected}`, payload.received !== undefined && `received=${payload.received ?? "none"}`]
+      .filter(Boolean)
+      .join(" ");
+    throw new Error(details || `Kyros HTTP ${response.status}`);
   }
 
   return payload;
