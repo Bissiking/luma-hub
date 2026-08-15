@@ -7,6 +7,7 @@ function trimSlash(value) {
 
 const nodeEnv = process.env.NODE_ENV || "development";
 const isProduction = nodeEnv === "production";
+const kyrosBaseUrl = trimSlash(process.env.KYROS_BASE_URL || "http://localhost:3001");
 
 export const config = {
   nodeEnv,
@@ -14,16 +15,24 @@ export const config = {
   port: Number(process.env.PORT || 3000),
   publicBaseUrl: trimSlash(process.env.PUBLIC_BASE_URL || "http://localhost:3000"),
   sessionTtlMs: Number(process.env.SESSION_TTL_HOURS || 12) * 60 * 60 * 1000,
-  kyrosBaseUrl: trimSlash(process.env.KYROS_BASE_URL || "http://localhost:3001"),
+
+  kyrosBaseUrl,
+  kyrosAuthorizeUrl: process.env.KYROS_AUTHORIZE_URL || `${kyrosBaseUrl}/authorize`,
+  kyrosTokenUrl: process.env.KYROS_TOKEN_URL || `${kyrosBaseUrl}/token`,
+  kyrosAppsUrl: `${kyrosBaseUrl}/api/apps/me`,
   kyrosClientId: process.env.KYROS_CLIENT_ID || "",
   kyrosClientSecret: process.env.KYROS_CLIENT_SECRET || "",
   kyrosRequestedScope: process.env.KYROS_REQUESTED_SCOPE || "profile email",
-  kyrosAppsEndpoint: process.env.KYROS_APPS_ENDPOINT || "/api/apps/me"
+  kyrosTimeoutMs: Number(process.env.KYROS_TIMEOUT_SECONDS || 5) * 1000
 };
 
 export function validateConfig() {
   if (!Number.isInteger(config.port) || config.port < 1 || config.port > 65535) {
     throw new Error("PORT invalide");
+  }
+
+  if (!Number.isFinite(config.kyrosTimeoutMs) || config.kyrosTimeoutMs <= 0) {
+    throw new Error("KYROS_TIMEOUT_SECONDS invalide");
   }
 
   if (config.isProduction) {
