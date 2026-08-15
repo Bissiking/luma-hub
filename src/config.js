@@ -23,7 +23,12 @@ export const config = {
   kyrosClientId: process.env.KYROS_CLIENT_ID || "",
   kyrosClientSecret: process.env.KYROS_CLIENT_SECRET || "",
   kyrosRequestedScope: process.env.KYROS_REQUESTED_SCOPE || "profile email",
-  kyrosTimeoutMs: Number(process.env.KYROS_TIMEOUT_SECONDS || 5) * 1000
+  kyrosTimeoutMs: Number(process.env.KYROS_TIMEOUT_SECONDS || 5) * 1000,
+
+  // Handshake obligatoire depuis Kyros SSO 4.4.0.
+  kyrosSsoVersion: process.env.KYROS_SSO_VERSION || "4.4.0",
+  kyrosEdition: String(process.env.KYROS_EDITION || "standard").toLowerCase(),
+  kyrosApplicationScope: String(process.env.KYROS_APPLICATION_SCOPE || "standard").toLowerCase()
 };
 
 export function validateConfig() {
@@ -33,6 +38,18 @@ export function validateConfig() {
 
   if (!Number.isFinite(config.kyrosTimeoutMs) || config.kyrosTimeoutMs <= 0) {
     throw new Error("KYROS_TIMEOUT_SECONDS invalide");
+  }
+
+  if (!config.kyrosSsoVersion) {
+    throw new Error("KYROS_SSO_VERSION est requis");
+  }
+
+  if (!["standard", "enterprise"].includes(config.kyrosEdition)) {
+    throw new Error("KYROS_EDITION doit valoir standard ou enterprise");
+  }
+
+  if (!["standard", "enterprise", "both"].includes(config.kyrosApplicationScope)) {
+    throw new Error("KYROS_APPLICATION_SCOPE doit valoir standard, enterprise ou both");
   }
 
   if (config.isProduction) {
