@@ -1,0 +1,61 @@
+<!-- src/public/index.html -->
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>LUMA</title>
+  <meta name="description" content="Portail principal LUMA">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="LUMA accueil">
+      <span class="brand-mark">L</span>
+      <span>LUMA</span>
+    </a>
+    <div class="top-actions">
+      <button id="searchButton" class="ghost hidden" type="button">⌘K&nbsp;&nbsp;Rechercher</button>
+      <button id="logoutButton" class="ghost hidden" type="button">Déconnexion</button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section id="guestView" class="hero hidden">
+      <p class="eyebrow">LUMA GATEWAY</p>
+      <h1>Votre univers,<br>un seul point d’entrée.</h1>
+      <p class="lead">Connectez-vous avec Kyros pour retrouver les applications et services auxquels vous avez accès.</p>
+      <a class="primary" href="/auth/login">Se connecter avec Kyros</a>
+    </section>
+
+    <section id="userView" class="hidden">
+      <div class="welcome">
+        <div>
+          <p class="eyebrow">ESPACE PERSONNEL</p>
+          <h1 id="welcomeTitle">Bienvenue.</h1>
+          <p class="lead">Vos applications LUMA, sans détour.</p>
+        </div>
+        <div id="avatar" class="avatar">L</div>
+      </div>
+
+      <div class="toolbar">
+        <label class="searchbox">
+          <span>⌕</span>
+          <input id="searchInput" type="search" placeholder="Rechercher une application..." autocomplete="off">
+        </label>
+      </div>
+
+      <div id="statusMessage" class="notice hidden"></div>
+      <div id="appsGrid" class="apps-grid"></div>
+      <div id="emptyState" class="empty hidden">Aucune application disponible pour le moment.</div>
+    </section>
+  </main>
+
+  <footer>
+    <span>LUMA</span>
+    <span>mhemery.fr</span>
+  </footer>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
