@@ -16,6 +16,30 @@ function getHandshakeFields() {
   };
 }
 
+function normalizeKyrosAssetUrl(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return null;
+
+  try {
+    return new URL(raw, `${config.kyrosBaseUrl}/`).toString();
+  } catch {
+    return null;
+  }
+}
+
+function normalizeApplication(app) {
+  if (!app || typeof app !== "object") return app;
+
+  const logoUrl = normalizeKyrosAssetUrl(app.logoUrl || app.logo_url);
+  const iconUrl = normalizeKyrosAssetUrl(app.iconUrl || app.icon_url || app.icon?.url);
+
+  return {
+    ...app,
+    ...(logoUrl ? { logoUrl } : {}),
+    ...(iconUrl ? { iconUrl } : {})
+  };
+}
+
 export function buildAuthorizeUrl(state) {
   const url = new URL(config.kyrosAuthorizeUrl);
   url.searchParams.set("client_id", config.kyrosClientId);
@@ -78,7 +102,7 @@ export async function fetchUserApps(accessToken) {
   }
 
   return {
-    apps: Array.isArray(payload.apps) ? payload.apps : [],
+    apps: Array.isArray(payload.apps) ? payload.apps.map(normalizeApplication) : [],
     unavailable: false,
     reason: null
   };
