@@ -136,7 +136,7 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
-function escapeAttribute(value) {
+function safeUrl(value) {
   const s = String(value || "#");
   if (/^https?:\/\//i.test(s) || s.startsWith("/")) return escapeHtml(s);
   return "#";
@@ -167,7 +167,7 @@ function appVisual(app, name) {
   if (imageUrl) {
     return `
       <span class="app-icon app-icon-image">
-        <img src="${escapeAttribute(imageUrl)}" alt="" loading="lazy" data-app-logo>
+        <img src="${safeUrl(imageUrl)}" alt="" loading="lazy" data-app-logo>
         <span class="app-icon-fallback">${escapeHtml(name.slice(0, 2).toUpperCase())}</span>
       </span>
     `;
@@ -212,8 +212,8 @@ function renderAppCard(app, index) {
   const delay = Math.min(index * 0.04, 0.35);
 
   return `
-    <article class="app-card" data-app="${escapeAttribute(key)}" style="animation-delay:${delay}s; perspective:600px;">
-      <a class="app-card-link" href="${escapeAttribute(appUrl(app))}" aria-label="Ouvrir ${escapeAttribute(name)}">
+    <article class="app-card" data-app="${escapeHtml(key)}" style="animation-delay:${delay}s; perspective:600px;">
+      <a class="app-card-link" href="${safeUrl(appUrl(app))}" aria-label="Ouvrir ${escapeHtml(name)}">
         <div class="app-top">
           ${appVisual(app, name)}
           <span class="app-copy">
@@ -223,7 +223,7 @@ function renderAppCard(app, index) {
         </div>
         <span class="app-arrow">↗</span>
       </a>
-      <button class="favorite-button${isFavorite ? " is-favorite" : ""}" type="button" data-favorite="${escapeAttribute(key)}" aria-label="${isFavorite ? "Retirer" : "Ajouter"} ${escapeAttribute(name)} ${isFavorite ? "des" : "aux"} favoris" title="${isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}">
+      <button class="favorite-button${isFavorite ? " is-favorite" : ""}" type="button" data-favorite="${escapeHtml(key)}" aria-label="${isFavorite ? "Retirer" : "Ajouter"} ${escapeHtml(name)} ${isFavorite ? "des" : "aux"} favoris" title="${isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}">
         <span aria-hidden="true">${isFavorite ? "★" : "☆"}</span>
       </button>
     </article>
@@ -236,7 +236,7 @@ function renderSection({ key, label, icon, items }, startIndex) {
   const cards = items.map((app, offset) => renderAppCard(app, startIndex + offset)).join("");
   return {
     html: `
-      <section class="app-section" data-category="${escapeAttribute(key)}">
+      <section class="app-section" data-category="${escapeHtml(key)}">
         <div class="category-heading">
           <span class="category-icon" aria-hidden="true">${escapeHtml(icon)}</span>
           <h2>${escapeHtml(label)}</h2>
