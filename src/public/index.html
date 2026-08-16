@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>LUMA</title>
+  <meta name="description" content="Portail principal LUMA">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="/logo32.png">
+  <link rel="icon" type="image/png" sizes="64x64" href="/logo64.png">
+  <link rel="apple-touch-icon" href="/logo128.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/hub-features.css">
+</head>
+<body>
+
+  <div id="cursor-glow" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="LUMA accueil">
+      <span class="brand-mark brand-mark-logo"><img src="/logo32.png" alt="" width="32" height="32"></span>
+      <span>LUMA</span>
+    </a>
+    <div class="top-actions">
+      <button id="searchButton" class="ghost hidden" type="button">
+        Rechercher <kbd>⌘K</kbd>
+      </button>
+      <button id="logoutButton" class="ghost hidden" type="button">Déconnexion</button>
+    </div>
+  </header>
+
+  <main class="shell">
+
+    <section id="guestView" class="hero hidden anim-hero">
+      <img class="hero-logo" src="/logo128.png" alt="LUMA" width="128" height="128">
+      <p class="eyebrow">LUMA · GATEWAY</p>
+      <h1>Votre univers,<br><em>un seul point</em><br>d'entrée.</h1>
+      <p class="lead">Connectez-vous avec Kyros pour retrouver toutes vos applications et services LUMA.</p>
+      <a class="primary" href="/auth/login">
+        Se connecter avec Kyros
+        <span aria-hidden="true">↗</span>
+      </a>
+    </section>
+
+    <section id="userView" class="hidden">
+
+      <div class="welcome anim-welcome">
+        <div>
+          <p class="eyebrow">ESPACE PERSONNEL</p>
+          <h1 id="welcomeTitle">Bienvenue.</h1>
+        </div>
+        <div id="avatar" class="avatar">L</div>
+      </div>
+
+      <div class="toolbar">
+        <label class="searchbox">
+          <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input id="searchInput" type="search" placeholder="Rechercher une app…" autocomplete="off">
+        </label>
+      </div>
+
+      <div id="statusMessage" class="notice hidden"></div>
+
+      <p class="section-label" id="appsLabel" style="display:none">Applications</p>
+      <div id="appsGrid" class="apps-sections"></div>
+      <div id="emptyState" class="empty hidden">Aucune application disponible pour le moment.</div>
+
+    </section>
+  </main>
+
+  <footer>
+    <span class="footer-brand"><img src="/logo32.png" alt="" width="18" height="18"> LUMA v12</span>
+    <span class="dot"></span>
+    <span>mhemery.fr</span>
+  </footer>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
