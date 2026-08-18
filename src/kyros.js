@@ -40,6 +40,28 @@ function normalizeApplication(app) {
   };
 }
 
+function normalizeContext(context) {
+  if (!context || context.type !== "enterprise") {
+    return {
+      type: "personal",
+      companyId: null,
+      companyName: null,
+      role: null,
+      workEmail: null,
+      memberships: []
+    };
+  }
+
+  return {
+    type: "enterprise",
+    companyId: context.companyId || null,
+    companyName: context.companyName || null,
+    role: context.role || null,
+    workEmail: context.workEmail || null,
+    memberships: Array.isArray(context.memberships) ? context.memberships : []
+  };
+}
+
 export function buildAuthorizeUrl(state) {
   const url = new URL(config.kyrosAuthorizeUrl);
   url.searchParams.set("client_id", config.kyrosClientId);
@@ -88,7 +110,7 @@ export async function fetchUserApps(accessToken) {
   });
 
   if (response.status === 404) {
-    return { apps: [], unavailable: true, reason: "apps_endpoint_not_ready" };
+    return { apps: [], context: normalizeContext(null), unavailable: true, reason: "apps_endpoint_not_ready" };
   }
 
   const payload = await response.json().catch(() => ({}));
@@ -96,6 +118,7 @@ export async function fetchUserApps(accessToken) {
   if (!response.ok) {
     return {
       apps: [],
+      context: normalizeContext(payload.context),
       unavailable: true,
       reason: payload.error || payload.message || `HTTP ${response.status}`
     };
@@ -103,6 +126,7 @@ export async function fetchUserApps(accessToken) {
 
   return {
     apps: Array.isArray(payload.apps) ? payload.apps.map(normalizeApplication) : [],
+    context: normalizeContext(payload.context),
     unavailable: false,
     reason: null
   };
