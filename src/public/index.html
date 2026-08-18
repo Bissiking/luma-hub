@@ -13,8 +13,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="/styles.css">
   <link rel="stylesheet" href="/hub-features.css">
+  <link rel="stylesheet" href="/enterprise-context.css">
 </head>
-<body>
+<body data-account-context="personal">
 
   <div id="cursor-glow" aria-hidden="true"></div>
 
@@ -22,6 +23,7 @@
     <a class="brand" href="/" aria-label="LUMA accueil">
       <span class="brand-mark brand-mark-logo"><img src="/logo32.png" alt="" width="32" height="32"></span>
       <span>LUMA</span>
+      <span id="contextBadge" class="context-badge hidden">Entreprise</span>
     </a>
     <div class="top-actions">
       <button id="searchButton" class="ghost hidden" type="button">
@@ -48,8 +50,9 @@
 
       <div class="welcome anim-welcome">
         <div>
-          <p class="eyebrow">ESPACE PERSONNEL</p>
+          <p id="spaceEyebrow" class="eyebrow">ESPACE PERSONNEL</p>
           <h1 id="welcomeTitle">Bienvenue.</h1>
+          <div id="companyContext" class="company-context hidden"></div>
         </div>
         <div id="avatar" class="avatar">L</div>
       </div>
@@ -78,6 +81,7 @@
     <span>mhemery.fr</span>
   </footer>
 
+  <script src="/enterprise-context.js"></script>
   <script type="module" src="/app.js"></script>
 </body>
 </html>
