@@ -79,7 +79,7 @@
   place-items: center;
   border: 1px solid var(--border);
   border-radius: 7px;
-  background: rgba(255,255,255,.02);
+  background: rgba(255,255,255,.04);
   color: var(--accent);
   font-size: 12px;
 }

@@ -5,13 +5,18 @@ const userView = document.querySelector("#userView");
 const logoutButton = document.querySelector("#logoutButton");
 const searchButton = document.querySelector("#searchButton");
 const searchInput = document.querySelector("#searchInput");
+const searchResults = document.querySelector("#searchResults");
 const appsGrid = document.querySelector("#appsGrid");
 const emptyState = document.querySelector("#emptyState");
-const appsLabel = document.querySelector("#appsLabel");
 const statusMessage = document.querySelector("#statusMessage");
 const welcomeTitle = document.querySelector("#welcomeTitle");
+const welcomeSubtitle = document.querySelector("#welcomeSubtitle");
 const avatar = document.querySelector("#avatar");
 const cursorGlow = document.querySelector("#cursor-glow");
+const favoritesGrid = document.querySelector("#favoritesGrid");
+const recentGrid = document.querySelector("#recentGrid");
+const favoritesCount = document.querySelector("#favoritesCount");
+const appsTotal = document.querySelector("#appsTotal");
 
 const CATEGORY_DEFINITIONS = {
   media: { label: "Média", icon: "◉", order: 10 },
@@ -31,10 +36,12 @@ const CATEGORY_ALIASES = {
   musique: "media",
   video: "media",
   vidéo: "media",
+  story: "media",
   outil: "tools",
   outils: "tools",
   utility: "tools",
   utilities: "tools",
+  finance: "tools",
   communication: "communication",
   chat: "communication",
   social: "communication",
@@ -44,6 +51,7 @@ const CATEGORY_ALIASES = {
   infra: "infrastructure",
   infrastructure: "infrastructure",
   supervision: "infrastructure",
+  administration: "infrastructure",
   loisirs: "leisure",
   loisir: "leisure",
   games: "leisure",
@@ -61,6 +69,7 @@ const CATEGORY_ALIASES = {
 let apps = [];
 let currentUser = null;
 let favorites = new Set();
+let recent = [];
 
 /* ── Cursor spotlight ── */
 if (cursorGlow && window.matchMedia("(pointer: fine)").matches) {
@@ -180,9 +189,35 @@ function appVisual(app, name) {
   return `<span class="app-icon">${escapeHtml(iconText || name.slice(0, 2).toUpperCase())}</span>`;
 }
 
+function tileVisual(app, name) {
+  const imageUrl = normalizeAssetUrl(
+    app.logoUrl || app.logo_url || app.iconUrl || app.icon_url || app.icon?.url
+  );
+
+  if (imageUrl) {
+    return `
+      <span class="tile-row-icon app-icon-image">
+        <img src="${safeUrl(imageUrl)}" alt="" loading="lazy" data-tile-logo>
+        <span class="app-icon-fallback">${escapeHtml(name.slice(0, 2).toUpperCase())}</span>
+      </span>
+    `;
+  }
+
+  const iconText = typeof app.icon === "string" && !normalizeAssetUrl(app.icon)
+    ? app.icon.trim().slice(0, 3)
+    : "";
+
+  return `<span class="tile-row-icon">${escapeHtml(iconText || name.slice(0, 2).toUpperCase())}</span>`;
+}
+
 function favoriteStorageKey() {
   const userId = currentUser?.id || currentUser?.sub || currentUser?.username || "anonymous";
   return `luma-hub:favorites:${userId}`;
+}
+
+function recentStorageKey() {
+  const userId = currentUser?.id || currentUser?.sub || currentUser?.username || "anonymous";
+  return `luma-hub:recent:${userId}`;
 }
 
 function loadFavorites() {
@@ -198,13 +233,33 @@ function saveFavorites() {
   localStorage.setItem(favoriteStorageKey(), JSON.stringify([...favorites]));
 }
 
+function loadRecent() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(recentStorageKey()) || "[]");
+    recent = Array.isArray(stored) ? stored.slice(0, 6) : [];
+  } catch {
+    recent = [];
+  }
+}
+
+function saveRecent() {
+  localStorage.setItem(recentStorageKey(), JSON.stringify(recent));
+}
+
+function recordLaunch(key) {
+  recent = [key, ...recent.filter((item) => item !== key)].slice(0, 6);
+  saveRecent();
+  renderDashboard();
+}
+
 function toggleFavorite(key) {
   if (favorites.has(key)) favorites.delete(key);
   else favorites.add(key);
   saveFavorites();
-  renderApps(searchInput?.value || "");
+  renderDashboard();
 }
 
+/* ── Widget rendering ── */
 function renderAppCard(app, index) {
   const name = String(app.name || appKey(app));
   const key = appKey(app);
@@ -213,7 +268,7 @@ function renderAppCard(app, index) {
 
   return `
     <article class="app-card" data-app="${escapeHtml(key)}" style="animation-delay:${delay}s; perspective:600px;">
-      <a class="app-card-link" href="${safeUrl(appUrl(app))}" aria-label="Ouvrir ${escapeHtml(name)}">
+      <a class="app-card-link" href="${safeUrl(appUrl(app))}" aria-label="Ouvrir ${escapeHtml(name)}" data-launch="${escapeHtml(key)}">
         <div class="app-top">
           ${appVisual(app, name)}
           <span class="app-copy">
@@ -227,6 +282,28 @@ function renderAppCard(app, index) {
         <span aria-hidden="true">${isFavorite ? "★" : "☆"}</span>
       </button>
     </article>
+  `;
+}
+
+function renderTileRow(app) {
+  const name = String(app.name || appKey(app));
+  const key = appKey(app);
+  const isFavorite = favorites.has(key);
+
+  return `
+    <div class="tile-row" data-app="${escapeHtml(key)}">
+      <a href="${safeUrl(appUrl(app))}" aria-label="Ouvrir ${escapeHtml(name)}" data-launch="${escapeHtml(key)}" style="text-decoration:none">
+        ${tileVisual(app, name)}
+      </a>
+      <a class="tile-row-copy" href="${safeUrl(appUrl(app))}" aria-label="Ouvrir ${escapeHtml(name)}" data-launch="${escapeHtml(key)}" style="text-decoration:none">
+        <span class="tile-row-name">${escapeHtml(name)}</span>
+        <span class="tile-row-desc">${escapeHtml(appDescription(app))}</span>
+      </a>
+      <span class="tile-row-arrow" aria-hidden="true">↗</span>
+      <button class="tile-row-star${isFavorite ? " is-favorite" : ""}" type="button" data-favorite="${escapeHtml(key)}" aria-label="${isFavorite ? "Retirer" : "Ajouter"} ${escapeHtml(name)} ${isFavorite ? "des" : "aux"} favoris" title="${isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}">
+        <span aria-hidden="true">${isFavorite ? "★" : "☆"}</span>
+      </button>
+    </div>
   `;
 }
 
@@ -249,24 +326,72 @@ function renderSection({ key, label, icon, items }, startIndex) {
   };
 }
 
-/* ── Render apps ── */
-function renderApps(filter = "") {
-  const query = filter.trim().toLowerCase();
-  const visible = apps.filter((app) => {
+function filterApps(query) {
+  const q = query.trim().toLowerCase();
+  return apps.filter((app) => {
     const category = CATEGORY_DEFINITIONS[appCategory(app)]?.label || "Autres";
     const haystack = `${app.name || ""} ${appDescription(app)} ${category}`.toLowerCase();
-    return !query || haystack.includes(query);
+    return !q || haystack.includes(q);
   });
+}
 
-  const favoriteApps = query ? [] : visible.filter((app) => favorites.has(appKey(app)));
-  const regularApps = query ? visible : visible.filter((app) => !favorites.has(appKey(app)));
-  const sections = [];
-
-  if (favoriteApps.length) {
-    sections.push({ key: "favorites", label: "Favoris", icon: "★", items: favoriteApps, order: 0 });
+function renderSearchResults(query) {
+  const q = query.trim().toLowerCase();
+  if (!q) {
+    searchResults.classList.add("hidden");
+    return;
   }
 
+  const matches = filterApps(q).slice(0, 8);
+
+  if (!matches.length) {
+    searchResults.innerHTML = `<p class="search-empty">Aucun résultat pour « ${escapeHtml(query.trim())} ».</p>`;
+    searchResults.classList.remove("hidden");
+    return;
+  }
+
+  searchResults.innerHTML = matches.map((app, index) => {
+    const name = String(app.name || appKey(app));
+    const key = appKey(app);
+    return `
+      <a class="search-result" href="${safeUrl(appUrl(app))}" data-launch="${escapeHtml(key)}">
+        ${appVisual(app, name)}
+        <span class="tile-row-copy">
+          <span class="tile-row-name">${escapeHtml(name)}</span>
+          <span class="tile-row-desc">${escapeHtml(appDescription(app))}</span>
+        </span>
+        <span class="search-index">${index + 1}</span>
+      </a>
+    `;
+  }).join("");
+
+  searchResults.classList.remove("hidden");
+}
+
+function renderDashboard() {
+  const visible = filterApps("");
+  const favApps = visible.filter((app) => favorites.has(appKey(app)));
+  const recentApps = recent
+    .map((key) => apps.find((app) => appKey(app) === key))
+    .filter(Boolean);
+
+  // Favoris
+  favoritesGrid.innerHTML = favApps.length
+    ? favApps.map(renderTileRow).join("")
+    : `<p class="widget-empty">Ajoutez vos applications préférées avec ☆ pour les retrouver ici.</p>`;
+
+  if (favoritesCount) favoritesCount.textContent = favApps.length;
+
+  // Récents
+  recentGrid.innerHTML = recentApps.length
+    ? recentApps.map(renderTileRow).join("")
+    : `<p class="widget-empty">Les applications que vous ouvrez apparaîtront ici.</p>`;
+
+  // Catégories
+  const regularApps = visible.filter((app) => !favorites.has(appKey(app)));
+  const sections = [];
   const grouped = new Map();
+
   for (const app of regularApps) {
     const key = appCategory(app);
     if (!grouped.has(key)) grouped.set(key, []);
@@ -289,10 +414,6 @@ function renderApps(filter = "") {
 
   appsGrid.innerHTML = html;
 
-  appsGrid.querySelectorAll("[data-app-logo]").forEach((image) => {
-    image.addEventListener("error", () => image.closest(".app-icon-image")?.classList.add("is-broken"), { once: true });
-  });
-
   appsGrid.querySelectorAll("[data-favorite]").forEach((button) => {
     button.addEventListener("click", () => toggleFavorite(button.dataset.favorite));
   });
@@ -304,10 +425,27 @@ function renderApps(filter = "") {
 
   const isEmpty = visible.length === 0;
   emptyState.classList.toggle("hidden", !isEmpty);
-  if (appsLabel) {
-    appsLabel.textContent = query ? `Résultats · ${visible.length}` : `Applications · ${apps.length}`;
-    appsLabel.style.display = visible.length > 0 ? "" : "none";
-  }
+  if (appsTotal) appsTotal.textContent = apps.length;
+
+  // Délégué : lancement d'app + favoris dans les autres widgets
+  favoritesGrid.querySelectorAll("[data-favorite]").forEach((button) => {
+    button.addEventListener("click", () => toggleFavorite(button.dataset.favorite));
+  });
+  recentGrid.querySelectorAll("[data-favorite]").forEach((button) => {
+    button.addEventListener("click", () => toggleFavorite(button.dataset.favorite));
+  });
+
+  bindLaunchHandlers();
+}
+
+function bindLaunchHandlers() {
+  document.querySelectorAll("[data-launch]").forEach((link) => {
+    link.addEventListener("click", () => recordLaunch(link.dataset.launch));
+  });
+
+  document.querySelectorAll("[data-app-logo], [data-tile-logo]").forEach((image) => {
+    image.addEventListener("error", () => image.closest(".app-icon-image")?.classList.add("is-broken"), { once: true });
+  });
 }
 
 /* ── Load apps ── */
@@ -326,7 +464,16 @@ async function loadApps() {
     statusMessage.classList.add("hidden");
   }
 
-  renderApps();
+  renderDashboard();
+}
+
+/* ── Greeting ── */
+function greeting() {
+  const hour = new Date().getHours();
+  if (hour < 5) return "Bonne nuit";
+  if (hour < 12) return "Bonjour";
+  if (hour < 18) return "Bon après-midi";
+  return "Bonsoir";
 }
 
 /* ── Boot ── */
@@ -341,19 +488,21 @@ async function boot() {
 
   currentUser = session.user;
   loadFavorites();
+  loadRecent();
 
   const name = displayName(session.user);
   userView.classList.remove("hidden");
   logoutButton.classList.remove("hidden");
   searchButton.classList.remove("hidden");
-  welcomeTitle.textContent = `Bienvenue, ${name}.`;
+  welcomeTitle.textContent = `${greeting()}, ${name}.`;
+  welcomeSubtitle.textContent = "Vos applications et services LUMA, réunis en un seul endroit.";
   avatar.textContent = name.slice(0, 1).toUpperCase();
 
   await loadApps();
 }
 
 /* ── Events ── */
-searchInput?.addEventListener("input", () => renderApps(searchInput.value));
+searchInput?.addEventListener("input", () => renderSearchResults(searchInput.value));
 
 searchButton?.addEventListener("click", () => searchInput?.focus());
 

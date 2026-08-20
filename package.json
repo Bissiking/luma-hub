@@ -1,6 +1,6 @@
 {
   "name": "luma-hub",
-  "version": "0.1.0-dev.2",
+  "version": "0.1.0-dev.3",
   "description": "Portail principal LUMA pour mhemery.fr, connecté à Kyros.",
   "type": "module",
   "main": "src/server.js",
