@@ -35,7 +35,7 @@ function currentSession(req) {
 }
 
 app.get("/health", (req, res) => {
-  res.json({ status: "ok", service: "luma-hub", version: "0.1.0-dev.1" });
+  res.json({ status: "ok", service: "luma-hub", version: "0.1.0-dev.2" });
 });
 
 app.get("/auth/login", (req, res) => {

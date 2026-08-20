@@ -1,0 +1,63 @@
+/* src/public/enterprise-context.css */
+body[data-account-context="enterprise"] {
+  --accent: #3aa58c;
+  --accent-rgb: 58, 165, 140;
+  --accent-soft: rgba(58,165,140,.12);
+  --accent-glow: rgba(58,165,140,.22);
+}
+
+.context-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--accent-rgb), .28);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.company-context {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted-2);
+  font-size: 13px;
+}
+
+.company-context-name {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.company-context-role {
+  padding: 3px 7px;
+  border-radius: 7px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  text-transform: capitalize;
+}
+
+body[data-account-context="enterprise"] .welcome {
+  position: relative;
+}
+
+body[data-account-context="enterprise"] .welcome::after {
+  content: "Organisation gérée par Kyros";
+  position: absolute;
+  right: 0;
+  bottom: 12px;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: .04em;
+}
+
+@media (max-width: 560px) {
+  body[data-account-context="enterprise"] .welcome::after { display: none; }
+  .company-context { flex-wrap: wrap; }
+}
