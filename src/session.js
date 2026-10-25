@@ -1,9 +1,11 @@
 // src/session.js
+// Sessions applicatives et transactions OAuth SSO v4 (mémoire, TTL court).
 import crypto from "node:crypto";
 import { config } from "./config.js";
 
 const sessions = new Map();
-const oauthStates = new Map();
+const oauthTransactions = new Map();
+const OAUTH_TRANSACTION_TTL_MS = 10 * 60 * 1000;
 
 function randomToken(bytes = 32) {
   return crypto.randomBytes(bytes).toString("base64url");
@@ -14,18 +16,19 @@ function cleanup() {
   for (const [token, session] of sessions) {
     if (session.expiresAt <= now) sessions.delete(token);
   }
-  for (const [state, record] of oauthStates) {
-    if (record.expiresAt <= now) oauthStates.delete(state);
+  for (const [state, record] of oauthTransactions) {
+    if (record.expiresAt <= now) oauthTransactions.delete(state);
   }
 }
 
 export function createSession(data) {
   cleanup();
   const token = randomToken();
+  const now = Date.now();
   sessions.set(token, {
     ...data,
-    createdAt: Date.now(),
-    expiresAt: Date.now() + config.sessionTtlMs
+    createdAt: now,
+    expiresAt: now + config.sessionTtlMs
   });
   return token;
 }
@@ -41,23 +44,36 @@ export function getSession(token) {
   return session;
 }
 
+export function touchSession(token, data) {
+  const session = getSession(token);
+  if (!session) return null;
+  Object.assign(session, data, { expiresAt: Date.now() + config.sessionTtlMs });
+  return session;
+}
+
 export function destroySession(token) {
   if (token) sessions.delete(token);
 }
 
-export function createOAuthState(returnTo = "/") {
+// Transaction OAuth liée au navigateur : state, verifier et callback d'origine.
+// Consommation one-shot (anti-rejeu) au retour de Kyros.
+export function createOAuthTransaction({ returnTo = "/", codeVerifier, scope }) {
   cleanup();
   const state = randomToken(24);
-  oauthStates.set(state, {
+  oauthTransactions.set(state, {
     returnTo: returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/",
-    expiresAt: Date.now() + 10 * 60 * 1000
+    codeVerifier,
+    scope,
+    redirectUri: `${config.publicBaseUrl}/auth/callback`,
+    expiresAt: Date.now() + OAUTH_TRANSACTION_TTL_MS
   });
   return state;
 }
 
-export function consumeOAuthState(state) {
-  const record = oauthStates.get(state);
-  oauthStates.delete(state);
+export function consumeOAuthTransaction(state) {
+  if (!state) return null;
+  const record = oauthTransactions.get(state);
+  oauthTransactions.delete(state);
   if (!record || record.expiresAt <= Date.now()) return null;
   return record;
 }
