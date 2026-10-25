@@ -1,524 +1,300 @@
-// src/public/app.js
+// app.js — démarrage, routeur hash, interactions globales
 
-const guestView = document.querySelector("#guestView");
-const userView = document.querySelector("#userView");
-const logoutButton = document.querySelector("#logoutButton");
-const searchButton = document.querySelector("#searchButton");
-const searchInput = document.querySelector("#searchInput");
-const searchResults = document.querySelector("#searchResults");
-const appsGrid = document.querySelector("#appsGrid");
-const emptyState = document.querySelector("#emptyState");
-const statusMessage = document.querySelector("#statusMessage");
-const welcomeTitle = document.querySelector("#welcomeTitle");
-const welcomeSubtitle = document.querySelector("#welcomeSubtitle");
-const avatar = document.querySelector("#avatar");
-const cursorGlow = document.querySelector("#cursor-glow");
-const favoritesGrid = document.querySelector("#favoritesGrid");
-const recentGrid = document.querySelector("#recentGrid");
-const favoritesCount = document.querySelector("#favoritesCount");
-const appsTotal = document.querySelector("#appsTotal");
+import {
+  state,
+  boot,
+  subscribe,
+  isAuthenticated,
+  favoriteIds,
+  findApp,
+  removeRecent,
+  clearRecents,
+  toggleFavorite,
+  reloadCatalog,
+  recentItems,
+  kyrosUrl
+} from "./js/state.js";
+import * as api from "./js/api.js";
+import { ROUTES, routeFromHash, renderNotFound } from "./js/views.js";
+import { initSearch, closeSearch } from "./js/search.js";
+import { toast, launchApp } from "./js/ui.js";
 
-const CATEGORY_DEFINITIONS = {
-  media: { label: "Média", icon: "◉", order: 10 },
-  tools: { label: "Outils", icon: "⌘", order: 20 },
-  communication: { label: "Communication", icon: "◇", order: 30 },
-  creation: { label: "Création", icon: "✦", order: 40 },
-  infrastructure: { label: "Infrastructure", icon: "⌁", order: 50 },
-  leisure: { label: "Loisirs", icon: "△", order: 60 },
-  lab: { label: "Lab", icon: "⌬", order: 70 },
-  system: { label: "Système", icon: "⚙", order: 80 },
-  other: { label: "Autres", icon: "·", order: 90 }
+const view = document.getElementById("view");
+const guestView = document.getElementById("guestView");
+const appShell = document.getElementById("appShell");
+
+let currentRoute = null;
+let rendering = false;
+
+// --------------------------------------------------------------- Routeur
+
+function updateNav() {
+  for (const link of document.querySelectorAll(".nav-link[data-route]")) {
+    const active = link.dataset.route === state.route;
+    link.classList.toggle("is-active", active);
+    if (active) link.setAttribute("aria-current", "page");
+    else link.removeAttribute("aria-current");
+  }
+
+  const count = favoriteIds().size;
+  const badge = document.getElementById("navFavoritesCount");
+  if (badge) {
+    badge.textContent = String(count);
+    badge.classList.toggle("hidden", count === 0);
+  }
+}
+
+const TITLES = {
+  accueil: "Accueil",
+  applications: "Applications",
+  favoris: "Favoris",
+  recents: "Récents"
 };
 
-const CATEGORY_ALIASES = {
-  medias: "media",
-  music: "media",
-  musique: "media",
-  video: "media",
-  vidéo: "media",
-  story: "media",
-  outil: "tools",
-  outils: "tools",
-  utility: "tools",
-  utilities: "tools",
-  finance: "tools",
-  communication: "communication",
-  chat: "communication",
-  social: "communication",
-  creation: "creation",
-  création: "creation",
-  creative: "creation",
-  infra: "infrastructure",
-  infrastructure: "infrastructure",
-  supervision: "infrastructure",
-  administration: "infrastructure",
-  loisirs: "leisure",
-  loisir: "leisure",
-  games: "leisure",
-  game: "leisure",
-  jeu: "leisure",
-  jeux: "leisure",
-  laboratoire: "lab",
-  experimental: "lab",
-  expérimental: "lab",
-  systeme: "system",
-  système: "system",
-  admin: "system"
-};
+function render() {
+  if (!isAuthenticated() || rendering) return;
 
-let apps = [];
-let currentUser = null;
-let favorites = new Set();
-let recent = [];
-
-/* ── Cursor spotlight ── */
-if (cursorGlow && window.matchMedia("(pointer: fine)").matches) {
-  document.addEventListener("mousemove", (e) => {
-    cursorGlow.style.transform = `translate(calc(${e.clientX}px - 50%), calc(${e.clientY}px - 50%))`;
-  });
-}
-
-/* ── Card magnetic tilt ── */
-function attachCardMotion(card) {
-  const TILT = 6;
-
-  card.addEventListener("mousemove", (e) => {
-    const rect = card.getBoundingClientRect();
-    const mx = ((e.clientX - rect.left) / rect.width) * 100;
-    const my = ((e.clientY - rect.top) / rect.height) * 100;
-    const rx = (((e.clientY - rect.top) / rect.height) - .5) * -TILT;
-    const ry = (((e.clientX - rect.left) / rect.width) - .5) * TILT;
-
-    card.style.setProperty("--mx", `${mx}%`);
-    card.style.setProperty("--my", `${my}%`);
-    card.style.setProperty("--rx", `${rx}deg`);
-    card.style.setProperty("--ry", `${ry}deg`);
-  });
-
-  card.addEventListener("mouseleave", () => {
-    card.style.setProperty("--rx", "0deg");
-    card.style.setProperty("--ry", "0deg");
-    card.style.removeProperty("--mx");
-    card.style.removeProperty("--my");
-  });
-}
-
-/* ── Helpers ── */
-function displayName(user) {
-  return user?.displayName || user?.display_name || user?.username || "vous";
-}
-
-function appKey(app) {
-  return String(app.id || app.key || app.clientId || app.client_id || app.name || "app");
-}
-
-function appUrl(app) {
-  return app.url || app.homeUrl || app.home_url || app.launchUrl || app.launch_url || "#";
-}
-
-function appDescription(app) {
-  return app.description || "Application LUMA";
-}
-
-function normalizeCategory(value) {
-  const raw = String(value || "").trim().toLowerCase();
-  if (!raw) return "other";
-  if (CATEGORY_DEFINITIONS[raw]) return raw;
-  return CATEGORY_ALIASES[raw] || "other";
-}
-
-function appCategory(app) {
-  return normalizeCategory(
-    app.category ||
-    app.categoryKey ||
-    app.category_key ||
-    app.metadata?.category
-  );
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-function safeUrl(value) {
-  const s = String(value || "#");
-  if (/^https?:\/\//i.test(s) || s.startsWith("/")) return escapeHtml(s);
-  return "#";
-}
-
-function normalizeAssetUrl(value) {
-  const raw = String(value || "").trim();
-  if (!raw) return null;
-  if (raw.startsWith("/") && !raw.startsWith("//")) return raw;
-
-  try {
-    const url = new URL(raw);
-    if (url.protocol === "https:" || (url.protocol === "http:" && ["localhost", "127.0.0.1"].includes(url.hostname))) {
-      return url.toString();
-    }
-  } catch {
-    return null;
-  }
-
-  return null;
-}
-
-function appVisual(app, name) {
-  const imageUrl = normalizeAssetUrl(
-    app.logoUrl || app.logo_url || app.iconUrl || app.icon_url || app.icon?.url
-  );
-
-  if (imageUrl) {
-    return `
-      <span class="app-icon app-icon-image">
-        <img src="${safeUrl(imageUrl)}" alt="" loading="lazy" data-app-logo>
-        <span class="app-icon-fallback">${escapeHtml(name.slice(0, 2).toUpperCase())}</span>
-      </span>
-    `;
-  }
-
-  const iconText = typeof app.icon === "string" && !normalizeAssetUrl(app.icon)
-    ? app.icon.trim().slice(0, 3)
-    : "";
-
-  return `<span class="app-icon">${escapeHtml(iconText || name.slice(0, 2).toUpperCase())}</span>`;
-}
-
-function tileVisual(app, name) {
-  const imageUrl = normalizeAssetUrl(
-    app.logoUrl || app.logo_url || app.iconUrl || app.icon_url || app.icon?.url
-  );
-
-  if (imageUrl) {
-    return `
-      <span class="tile-row-icon app-icon-image">
-        <img src="${safeUrl(imageUrl)}" alt="" loading="lazy" data-tile-logo>
-        <span class="app-icon-fallback">${escapeHtml(name.slice(0, 2).toUpperCase())}</span>
-      </span>
-    `;
-  }
-
-  const iconText = typeof app.icon === "string" && !normalizeAssetUrl(app.icon)
-    ? app.icon.trim().slice(0, 3)
-    : "";
-
-  return `<span class="tile-row-icon">${escapeHtml(iconText || name.slice(0, 2).toUpperCase())}</span>`;
-}
-
-function favoriteStorageKey() {
-  const userId = currentUser?.id || currentUser?.sub || currentUser?.username || "anonymous";
-  return `luma-hub:favorites:${userId}`;
-}
-
-function recentStorageKey() {
-  const userId = currentUser?.id || currentUser?.sub || currentUser?.username || "anonymous";
-  return `luma-hub:recent:${userId}`;
-}
-
-function loadFavorites() {
-  try {
-    const stored = JSON.parse(localStorage.getItem(favoriteStorageKey()) || "[]");
-    favorites = new Set(Array.isArray(stored) ? stored.map(String) : []);
-  } catch {
-    favorites = new Set();
-  }
-}
-
-function saveFavorites() {
-  localStorage.setItem(favoriteStorageKey(), JSON.stringify([...favorites]));
-}
-
-function loadRecent() {
-  try {
-    const stored = JSON.parse(localStorage.getItem(recentStorageKey()) || "[]");
-    recent = Array.isArray(stored) ? stored.slice(0, 6) : [];
-  } catch {
-    recent = [];
-  }
-}
-
-function saveRecent() {
-  localStorage.setItem(recentStorageKey(), JSON.stringify(recent));
-}
-
-function recordLaunch(key) {
-  recent = [key, ...recent.filter((item) => item !== key)].slice(0, 6);
-  saveRecent();
-  renderDashboard();
-}
-
-function toggleFavorite(key) {
-  if (favorites.has(key)) favorites.delete(key);
-  else favorites.add(key);
-  saveFavorites();
-  renderDashboard();
-}
-
-/* ── Widget rendering ── */
-function renderAppCard(app, index) {
-  const name = String(app.name || appKey(app));
-  const key = appKey(app);
-  const isFavorite = favorites.has(key);
-  const delay = Math.min(index * 0.04, 0.35);
-
-  return `
-    <article class="app-card" data-app="${escapeHtml(key)}" style="animation-delay:${delay}s; perspective:600px;">
-      <a class="app-card-link" href="${safeUrl(appUrl(app))}" aria-label="Ouvrir ${escapeHtml(name)}" data-launch="${escapeHtml(key)}">
-        <div class="app-top">
-          ${appVisual(app, name)}
-          <span class="app-copy">
-            <span class="app-name">${escapeHtml(name)}</span>
-            <span class="app-desc">${escapeHtml(appDescription(app))}</span>
-          </span>
-        </div>
-        <span class="app-arrow">↗</span>
-      </a>
-      <button class="favorite-button${isFavorite ? " is-favorite" : ""}" type="button" data-favorite="${escapeHtml(key)}" aria-label="${isFavorite ? "Retirer" : "Ajouter"} ${escapeHtml(name)} ${isFavorite ? "des" : "aux"} favoris" title="${isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}">
-        <span aria-hidden="true">${isFavorite ? "★" : "☆"}</span>
-      </button>
-    </article>
-  `;
-}
-
-function renderTileRow(app) {
-  const name = String(app.name || appKey(app));
-  const key = appKey(app);
-  const isFavorite = favorites.has(key);
-
-  return `
-    <div class="tile-row" data-app="${escapeHtml(key)}">
-      <a href="${safeUrl(appUrl(app))}" aria-label="Ouvrir ${escapeHtml(name)}" data-launch="${escapeHtml(key)}" style="text-decoration:none">
-        ${tileVisual(app, name)}
-      </a>
-      <a class="tile-row-copy" href="${safeUrl(appUrl(app))}" aria-label="Ouvrir ${escapeHtml(name)}" data-launch="${escapeHtml(key)}" style="text-decoration:none">
-        <span class="tile-row-name">${escapeHtml(name)}</span>
-        <span class="tile-row-desc">${escapeHtml(appDescription(app))}</span>
-      </a>
-      <span class="tile-row-arrow" aria-hidden="true">↗</span>
-      <button class="tile-row-star${isFavorite ? " is-favorite" : ""}" type="button" data-favorite="${escapeHtml(key)}" aria-label="${isFavorite ? "Retirer" : "Ajouter"} ${escapeHtml(name)} ${isFavorite ? "des" : "aux"} favoris" title="${isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}">
-        <span aria-hidden="true">${isFavorite ? "★" : "☆"}</span>
-      </button>
-    </div>
-  `;
-}
-
-function renderSection({ key, label, icon, items }, startIndex) {
-  if (!items.length) return { html: "", nextIndex: startIndex };
-
-  const cards = items.map((app, offset) => renderAppCard(app, startIndex + offset)).join("");
-  return {
-    html: `
-      <section class="app-section" data-category="${escapeHtml(key)}">
-        <div class="category-heading">
-          <span class="category-icon" aria-hidden="true">${escapeHtml(icon)}</span>
-          <h2>${escapeHtml(label)}</h2>
-          <span class="category-count">${items.length}</span>
-        </div>
-        <div class="apps-grid">${cards}</div>
-      </section>
-    `,
-    nextIndex: startIndex + items.length
-  };
-}
-
-function filterApps(query) {
-  const q = query.trim().toLowerCase();
-  return apps.filter((app) => {
-    const category = CATEGORY_DEFINITIONS[appCategory(app)]?.label || "Autres";
-    const haystack = `${app.name || ""} ${appDescription(app)} ${category}`.toLowerCase();
-    return !q || haystack.includes(q);
-  });
-}
-
-function renderSearchResults(query) {
-  const q = query.trim().toLowerCase();
-  if (!q) {
-    searchResults.classList.add("hidden");
+  const route = routeFromHash(location.hash);
+  if (route === null) {
+    state.route = "notfound";
+    view.innerHTML = renderNotFound();
+    updateNav();
+    document.title = "Page introuvable — LUMA Hub";
     return;
   }
 
-  const matches = filterApps(q).slice(0, 8);
-
-  if (!matches.length) {
-    searchResults.innerHTML = `<p class="search-empty">Aucun résultat pour « ${escapeHtml(query.trim())} ».</p>`;
-    searchResults.classList.remove("hidden");
-    return;
-  }
-
-  searchResults.innerHTML = matches.map((app, index) => {
-    const name = String(app.name || appKey(app));
-    const key = appKey(app);
-    return `
-      <a class="search-result" href="${safeUrl(appUrl(app))}" data-launch="${escapeHtml(key)}">
-        ${appVisual(app, name)}
-        <span class="tile-row-copy">
-          <span class="tile-row-name">${escapeHtml(name)}</span>
-          <span class="tile-row-desc">${escapeHtml(appDescription(app))}</span>
-        </span>
-        <span class="search-index">${index + 1}</span>
-      </a>
-    `;
-  }).join("");
-
-  searchResults.classList.remove("hidden");
-}
-
-function renderDashboard() {
-  const visible = filterApps("");
-  const favApps = visible.filter((app) => favorites.has(appKey(app)));
-  const recentApps = recent
-    .map((key) => apps.find((app) => appKey(app) === key))
-    .filter(Boolean);
-
-  // Favoris
-  favoritesGrid.innerHTML = favApps.length
-    ? favApps.map(renderTileRow).join("")
-    : `<p class="widget-empty">Ajoutez vos applications préférées avec ☆ pour les retrouver ici.</p>`;
-
-  if (favoritesCount) favoritesCount.textContent = favApps.length;
-
-  // Récents
-  recentGrid.innerHTML = recentApps.length
-    ? recentApps.map(renderTileRow).join("")
-    : `<p class="widget-empty">Les applications que vous ouvrez apparaîtront ici.</p>`;
-
-  // Catégories
-  const regularApps = visible.filter((app) => !favorites.has(appKey(app)));
-  const sections = [];
-  const grouped = new Map();
-
-  for (const app of regularApps) {
-    const key = appCategory(app);
-    if (!grouped.has(key)) grouped.set(key, []);
-    grouped.get(key).push(app);
-  }
-
-  for (const [key, items] of grouped.entries()) {
-    const definition = CATEGORY_DEFINITIONS[key] || CATEGORY_DEFINITIONS.other;
-    sections.push({ key, ...definition, items });
-  }
-
-  sections.sort((a, b) => (a.order ?? 999) - (b.order ?? 999) || a.label.localeCompare(b.label, "fr"));
-
-  let index = 0;
-  const html = sections.map((section) => {
-    const rendered = renderSection(section, index);
-    index = rendered.nextIndex;
-    return rendered.html;
-  }).join("");
-
-  appsGrid.innerHTML = html;
-
-  appsGrid.querySelectorAll("[data-favorite]").forEach((button) => {
-    button.addEventListener("click", () => toggleFavorite(button.dataset.favorite));
-  });
-
-  if (window.matchMedia("(prefers-reduced-motion: no-preference)").matches &&
-      window.matchMedia("(pointer: fine)").matches) {
-    appsGrid.querySelectorAll(".app-card").forEach(attachCardMotion);
-  }
-
-  const isEmpty = visible.length === 0;
-  emptyState.classList.toggle("hidden", !isEmpty);
-  if (appsTotal) appsTotal.textContent = apps.length;
-
-  // Délégué : lancement d'app + favoris dans les autres widgets
-  favoritesGrid.querySelectorAll("[data-favorite]").forEach((button) => {
-    button.addEventListener("click", () => toggleFavorite(button.dataset.favorite));
-  });
-  recentGrid.querySelectorAll("[data-favorite]").forEach((button) => {
-    button.addEventListener("click", () => toggleFavorite(button.dataset.favorite));
-  });
-
-  bindLaunchHandlers();
-}
-
-function bindLaunchHandlers() {
-  document.querySelectorAll("[data-launch]").forEach((link) => {
-    link.addEventListener("click", () => recordLaunch(link.dataset.launch));
-  });
-
-  document.querySelectorAll("[data-app-logo], [data-tile-logo]").forEach((image) => {
-    image.addEventListener("error", () => image.closest(".app-icon-image")?.classList.add("is-broken"), { once: true });
-  });
-}
-
-/* ── Load apps ── */
-async function loadApps() {
-  const response = await fetch("/api/apps", { headers: { accept: "application/json" } });
-  const payload = await response.json().catch(() => ({ apps: [] }));
-  apps = Array.isArray(payload.apps) ? payload.apps : [];
-
-  if (!response.ok && payload.reason === "apps_endpoint_not_ready") {
-    statusMessage.textContent = "Connexion Kyros prête. Le nouvel endpoint des applications n'est pas encore disponible.";
-    statusMessage.classList.remove("hidden");
-  } else if (!response.ok) {
-    statusMessage.textContent = "Impossible de récupérer les applications depuis Kyros pour le moment.";
-    statusMessage.classList.remove("hidden");
+  const routeChanged = route !== currentRoute;
+  if (routeChanged) {
+    currentRoute = route;
+    state.route = route;
+    view.removeAttribute("data-rendered");
+    view.innerHTML = ROUTES[route]();
+    window.scrollTo(0, 0);
+    document.title = `${TITLES[route]} — LUMA Hub`;
+    updateNav();
+    requestAnimationFrame(() => view.setAttribute("data-rendered", "1"));
   } else {
-    statusMessage.classList.add("hidden");
+    // Mise à jour in-place (favoris/récents) : on conserve la position.
+    const scrollY = window.scrollY;
+    view.innerHTML = ROUTES[route]();
+    view.setAttribute("data-rendered", "1");
+    window.scrollTo({ top: scrollY });
+    updateNav();
+  }
+}
+
+// --------------------------------------------------------------- Compte
+
+function fillAccountUi() {
+  const user = state.session?.user;
+  const name = user?.display_name || user?.username || "Compte";
+  const initial = (name || "·").trim().charAt(0).toUpperCase() || "·";
+
+  const topbarName = document.getElementById("topbarName");
+  const menuName = document.getElementById("menuName");
+  const menuEmail = document.getElementById("menuEmail");
+  if (topbarName) topbarName.textContent = name;
+  if (menuName) menuName.textContent = name;
+  if (menuEmail) menuEmail.textContent = user?.email || "";
+  for (const avatarId of ["topbarAvatar", "menuAvatar"]) {
+    const el = document.getElementById(avatarId);
+    if (el) el.textContent = initial;
   }
 
-  renderDashboard();
+  const accountLink = document.getElementById("openKyrosAccount");
+  if (accountLink) accountLink.href = `${kyrosUrl()}/account`;
 }
 
-/* ── Greeting ── */
-function greeting() {
-  const hour = new Date().getHours();
-  if (hour < 5) return "Bonne nuit";
-  if (hour < 12) return "Bonjour";
-  if (hour < 18) return "Bon après-midi";
-  return "Bonsoir";
+function closeDropdowns() {
+  for (const dd of document.querySelectorAll(".dropdown.is-open")) {
+    dd.classList.remove("is-open");
+    dd.querySelector("[aria-haspopup]")?.setAttribute("aria-expanded", "false");
+  }
 }
 
-/* ── Boot ── */
-async function boot() {
-  const response = await fetch("/api/session", { headers: { accept: "application/json" } });
-  const session = await response.json();
+// --------------------------------------------------------------- Actions
 
-  if (!session.authenticated) {
-    guestView.classList.remove("hidden");
+async function handleFavorite(button) {
+  const id = button.dataset.fav;
+  const willBeFavorite = !favoriteIds().has(id);
+
+  // Mise à jour optimiste du bouton (feedback immédiat).
+  button.classList.toggle("is-favorite", willBeFavorite);
+  button.setAttribute("aria-pressed", String(willBeFavorite));
+  button.setAttribute("aria-label", willBeFavorite ? "Retirer des favoris" : "Ajouter aux favoris");
+  button.disabled = true;
+
+  try {
+    await toggleFavorite(id);
+    toast(willBeFavorite ? "Ajouté aux favoris" : "Retiré des favoris");
+  } catch (error) {
+    button.classList.toggle("is-favorite", !willBeFavorite);
+    toast(error.message || "Impossible de mettre à jour vos favoris.", "error");
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function retryCatalog() {
+  rendering = true;
+  try {
+    await reloadCatalog();
+    state.bootError = null;
+    toast("Catalogue rechargé");
+  } catch {
+    toast("Kyros reste injoignable.", "error");
+  } finally {
+    rendering = false;
+    render();
+  }
+}
+
+async function handleLogout(event) {
+  const button = event.currentTarget;
+  button.disabled = true;
+  try {
+    await api.logout();
+  } finally {
+    location.href = "/";
+  }
+}
+
+// --------------------------------------------------------------- Écouteurs
+
+function bindEvents() {
+  // Délégation globale des actions de la vue.
+  document.addEventListener("click", (event) => {
+    const favorite = event.target.closest("[data-fav]");
+    if (favorite) {
+      event.preventDefault();
+      handleFavorite(favorite);
+      return;
+    }
+
+    const launch = event.target.closest("[data-launch]");
+    if (launch) {
+      const app = findApp(launch.dataset.launch);
+      if (app) launchApp(app);
+      // L'anchor ouvre l'URL dans un nouvel onglet par défaut.
+      return;
+    }
+
+    const remove = event.target.closest("[data-remove-recent]");
+    if (remove) {
+      removeRecent(remove.dataset.removeRecent);
+      toast("Retiré des récents");
+      return;
+    }
+
+    if (event.target.closest("[data-clear-recents]")) {
+      clearRecents();
+      toast("Historique des récents effacé");
+      return;
+    }
+
+    if (event.target.closest("[data-retry]")) {
+      retryCatalog();
+      return;
+    }
+
+    // Dropdowns (notifications / compte).
+    const trigger = event.target.closest("#userChip, #notifButton");
+    if (trigger) {
+      const dropdown = trigger.closest(".dropdown");
+      const wasOpen = dropdown.classList.contains("is-open");
+      closeDropdowns();
+      if (!wasOpen) {
+        dropdown.classList.add("is-open");
+        trigger.setAttribute("aria-expanded", "true");
+      }
+      return;
+    }
+    if (!event.target.closest(".dropdown-panel")) closeDropdowns();
+  });
+
+  // Déconnexion.
+  document.getElementById("logoutButton")?.addEventListener("click", handleLogout);
+
+  // Menu mobile.
+  const burger = document.getElementById("burger");
+  const backdrop = document.getElementById("sidebarBackdrop");
+  const toggleNav = (open) => {
+    document.body.classList.toggle("nav-open", open);
+    burger?.setAttribute("aria-expanded", String(open));
+    if (backdrop) backdrop.hidden = !open;
+  };
+  burger?.addEventListener("click", () => toggleNav(!document.body.classList.contains("nav-open")));
+  backdrop?.addEventListener("click", () => toggleNav(false));
+  document.querySelector(".sidebar")?.addEventListener("click", (event) => {
+    if (event.target.closest(".nav-link, .brand")) toggleNav(false);
+  });
+
+  // Session expirée (401 sur n'importe quel appel API).
+  document.addEventListener("hub:expired", () => {
+    const returnTo = `/${location.hash || "#/"}`;
+    location.href = `/auth/login?returnTo=${encodeURIComponent(returnTo)}`;
+  });
+
+  // Images de logos cassées → initiales (listener capture, compatible CSP).
+  document.addEventListener(
+    "error",
+    (event) => {
+      const img = event.target;
+      if (img?.tagName === "IMG" && img.hasAttribute("data-app-logo")) {
+        const holder = img.closest(".app-logo");
+        if (holder) holder.textContent = img.dataset.initials || "?";
+      }
+    },
+    true
+  );
+
+  // Fermer les dropdowns avec Échap.
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeDropdowns();
+  });
+}
+
+// --------------------------------------------------------------- Démarrage
+
+async function start() {
+  initSearch();
+  bindEvents();
+
+  try {
+    await boot();
+  } catch {
+    guestView?.classList.remove("hidden");
+    guestView && (guestView.querySelector(".lead").textContent =
+      "Le Hub ne peut pas contacter le serveur. Réessayez dans un instant.");
     return;
   }
 
-  currentUser = session.user;
-  loadFavorites();
-  loadRecent();
+  fetch("/health")
+    .then((res) => res.json())
+    .then((data) => {
+      const el = document.getElementById("footerVersion");
+      if (el && data?.version) el.textContent = `v${data.version}`;
+    })
+    .catch(() => {});
 
-  const name = displayName(session.user);
-  userView.classList.remove("hidden");
-  logoutButton.classList.remove("hidden");
-  searchButton.classList.remove("hidden");
-  welcomeTitle.textContent = `${greeting()}, ${name}.`;
-  welcomeSubtitle.textContent = "Vos applications et services LUMA, réunis en un seul endroit.";
-  avatar.textContent = name.slice(0, 1).toUpperCase();
+  if (!isAuthenticated()) {
+    guestView?.classList.remove("hidden");
+    return;
+  }
 
-  await loadApps();
+  fillAccountUi();
+  appShell?.classList.remove("hidden");
+  render();
+
+  window.addEventListener("hashchange", () => {
+    closeSearch();
+    render();
+  });
+
+  subscribe((reason) => {
+    if (reason === "boot") return;
+    render();
+  });
 }
 
-/* ── Events ── */
-searchInput?.addEventListener("input", () => renderSearchResults(searchInput.value));
-
-searchButton?.addEventListener("click", () => searchInput?.focus());
-
-document.addEventListener("keydown", (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
-    e.preventDefault();
-    searchInput?.focus();
-  }
-});
-
-logoutButton?.addEventListener("click", async () => {
-  await fetch("/auth/logout", { method: "POST" });
-  window.location.reload();
-});
-
-boot().catch((error) => {
-  console.error("[luma-hub] boot failed", error);
-  guestView.classList.remove("hidden");
-});
+start();
