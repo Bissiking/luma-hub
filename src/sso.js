@@ -14,6 +14,10 @@ export class SsoError extends Error {
   }
 }
 
+export function isTransientKyrosError(error) {
+  return error instanceof SsoError && (["kyros_timeout", "kyros_unreachable", "temporarily_unavailable", "server_error"].includes(error.code) || error.status === 429 || error.status >= 500);
+}
+
 function handshake() {
   return {
     kyros_sso_version: config.kyrosSsoVersion,
@@ -41,7 +45,7 @@ async function kyrosFetch(url, body) {
   const payload = await response.json().catch(() => null);
   if (!response.ok) {
     const code = payload?.error || `http_${response.status}`;
-    const status = response.status === 500 ? 502 : 502;
+    const status = response.status >= 500 ? 503 : response.status;
     throw new SsoError(code, payload?.error_description || payload?.message || null, status);
   }
   return payload;

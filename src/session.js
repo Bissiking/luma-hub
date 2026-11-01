@@ -57,11 +57,35 @@ export function destroySession(token) {
 
 // Transaction OAuth liée au navigateur : state, verifier et callback d'origine.
 // Consommation one-shot (anti-rejeu) au retour de Kyros.
-export function createOAuthTransaction({ returnTo = "/", codeVerifier, scope }) {
+export const OAUTH_BINDING_COOKIE = "luma_hub_oauth";
+
+export function isOAuthBrowserBinding(value) {
+  return typeof value === "string" && /^[A-Za-z0-9_-]{43}$/.test(value);
+}
+
+export function newOAuthBrowserBinding() {
+  return randomToken();
+}
+
+export function oauthBindingCookieOptions() {
+  return { ...sessionCookieOptions(), path: "/auth", maxAge: OAUTH_TRANSACTION_TTL_MS };
+}
+
+export function safeReturnTo(value) {
+  if (typeof value !== "string" || value.length > 8192 || !value.startsWith("/") || value.startsWith("//") || /[\\\x00-\x1f\x7f]/.test(value)) return "/";
+  try {
+    const target = new URL(value, config.publicBaseUrl);
+    return target.origin === new URL(config.publicBaseUrl).origin ? target.pathname + target.search + target.hash : "/";
+  } catch { return "/"; }
+}
+
+export function createOAuthTransaction({ returnTo = "/", codeVerifier, scope, browserBinding }) {
+  if (!isOAuthBrowserBinding(browserBinding)) throw new TypeError("OAuth browser binding required");
   cleanup();
   const state = randomToken(24);
   oauthTransactions.set(state, {
-    returnTo: returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/",
+    returnTo: safeReturnTo(returnTo),
+    browserBindingHash: crypto.createHash("sha256").update(browserBinding).digest(),
     codeVerifier,
     scope,
     redirectUri: `${config.publicBaseUrl}/auth/callback`,
@@ -70,11 +94,14 @@ export function createOAuthTransaction({ returnTo = "/", codeVerifier, scope }) 
   return state;
 }
 
-export function consumeOAuthTransaction(state) {
-  if (!state) return null;
+export function consumeOAuthTransaction(state, browserBinding) {
+  if (typeof state !== "string" || !isOAuthBrowserBinding(browserBinding)) return null;
   const record = oauthTransactions.get(state);
+  if (!record) return null;
+  if (record.expiresAt <= Date.now()) { oauthTransactions.delete(state); return null; }
+  const supplied = crypto.createHash("sha256").update(browserBinding).digest();
+  if (!crypto.timingSafeEqual(record.browserBindingHash, supplied)) return null;
   oauthTransactions.delete(state);
-  if (!record || record.expiresAt <= Date.now()) return null;
   return record;
 }
 
