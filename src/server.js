@@ -15,9 +15,14 @@ import {
   destroySession,
   createOAuthTransaction,
   consumeOAuthTransaction,
-  sessionCookieOptions
+  sessionCookieOptions,
+  OAUTH_BINDING_COOKIE,
+  isOAuthBrowserBinding,
+  newOAuthBrowserBinding,
+  oauthBindingCookieOptions
 } from "./session.js";
 
+import pkg from "../package.json" with { type: "json" };
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, "public");
 const version = readVersion();
@@ -45,9 +50,16 @@ app.use(
     crossOriginEmbedderPolicy: false
   })
 );
-app.use(morgan(config.isProduction ? "combined" : "dev"));
+morgan.token("hub-route", (req) => req.route?.path || "[unmatched]");
+app.use(morgan(":method :hub-route :status :response-time ms"));
 app.use(cookieParser());
 app.use(express.json());
+app.use((req, res, next) => {
+  if (!["GET", "HEAD", "OPTIONS"].includes(req.method) && req.get("origin") !== new URL(config.publicBaseUrl).origin) {
+    return res.status(403).json({ error: "origin_mismatch" });
+  }
+  next();
+});
 app.use(
   express.static(publicDir, {
     index: false,
@@ -57,7 +69,7 @@ app.use(
 
 function readVersion() {
   try {
-    return fs.readFileSync(path.join(__dirname, "..", "VERSION"), "utf8").trim();
+    return pkg.version || "0.0.0";
   } catch {
     return "0.0.0";
   }
@@ -107,7 +119,8 @@ function refreshSession(token, session) {
           accessExpiresAt: Date.now() + pair.expiresInSeconds * 1000,
           claims
         });
-      } catch {
+      } catch (error) {
+        if (sso.isTransientKyrosError(error)) throw error;
         destroySession(token);
         throw new sso.SsoError("session_expired", "Session expirée, reconnectez-vous.", 401);
       } finally {
@@ -215,7 +228,11 @@ app.get("/auth/login", async (req, res) => {
   try {
     const returnTo = typeof req.query.returnTo === "string" ? req.query.returnTo : "/";
     const { codeVerifier, codeChallenge } = sso.createPkcePair();
+    const existingBinding = req.cookies?.[OAUTH_BINDING_COOKIE];
+    const browserBinding = isOAuthBrowserBinding(existingBinding) ? existingBinding : newOAuthBrowserBinding();
+    res.cookie(OAUTH_BINDING_COOKIE, browserBinding, oauthBindingCookieOptions());
     const state = createOAuthTransaction({
+      browserBinding,
       returnTo,
       codeVerifier,
       scope: config.kyrosRequestedScope
@@ -239,27 +256,22 @@ app.get("/auth/login", async (req, res) => {
 });
 
 app.get("/auth/callback", async (req, res) => {
-  const transaction = consumeOAuthTransaction(req.query.state);
+  const params = new URL(req.originalUrl, config.publicBaseUrl).searchParams;
+  const keys = ["state", "iss", "code", "error", "error_description"];
+  const code = params.get("code"), error = params.get("error"), state = params.get("state");
+  if (keys.some((key) => params.getAll(key).length > 1) || !state || Boolean(code) === Boolean(error)) {
+    return errorPage(res, 400, "Connexion refusée", "Réponse d’autorisation invalide. Réessayez.");
+  }
+  // Check the issuer for both success and error before consuming the browser transaction.
+  if (params.get("iss") !== config.kyrosIssuer) {
+    return errorPage(res, 400, "Connexion refusée", "Issuer inattendu (confusion de serveur possible).");
+  }
+  const transaction = consumeOAuthTransaction(state, req.cookies?.[OAUTH_BINDING_COOKIE]);
   if (!transaction) {
-    errorPage(res, 400, "Connexion refusée", "Transaction invalide ou expirée. Réessayez.");
-    return;
+    return errorPage(res, 400, "Connexion refusée", "Transaction invalide ou expirée. Réessayez.");
   }
-
-  if (req.query.error) {
-    errorPage(res, 400, "Connexion refusée", String(req.query.error_description || req.query.error));
-    return;
-  }
-
-  // Contrôle RFC 9207 : l'issuer retourné doit correspondre à Kyros.
-  if (req.query.iss !== config.kyrosIssuer) {
-    errorPage(res, 400, "Connexion refusée", "Issuer inattendu (confusion de serveur possible).");
-    return;
-  }
-
-  const code = typeof req.query.code === "string" ? req.query.code : "";
-  if (!code) {
-    errorPage(res, 400, "Connexion refusée", "Code d'autorisation manquant.");
-    return;
+  if (error) {
+    return errorPage(res, 400, "Connexion refusée", String(params.get("error_description") || error).slice(0, 500));
   }
 
   try {
