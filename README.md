@@ -73,7 +73,11 @@ npm run start   # production
 npm run check   # contrôle de syntaxe
 ```
 
-## Branches
+## Branches et versions
 
-- `dev` : développement
-- `prod` : production
+- `prod` : version actuellement en production, conservée pendant la refonte.
+- `1.x.x` : développement de LUMA Hub V1, sans déploiement automatique en production.
+- Branches de fonctionnalités ou corrections facultatives, fusionnées vers `1.x.x` après validation.
+
+Le numéro de version est défini **uniquement** dans `package.json`. Le fichier `VERSION` a été supprimé.
+Le chantier V1 est décrit dans [`docs/V1-ROADMAP.md`](docs/V1-ROADMAP.md).
