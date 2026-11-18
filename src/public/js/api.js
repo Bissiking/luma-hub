@@ -10,17 +10,18 @@ export class ApiError extends Error {
   }
 }
 
-async function request(path, { method = "GET", body } = {}) {
+export async function request(path, { method = "GET", body } = {}) {
   let response;
   try {
     response = await fetch(path, {
       method,
       headers: {
         accept: "application/json",
-        ...(body === undefined ? {} : { "content-type": "application/json" })
+        ...(body === undefined ? {} : { "content-type": "application/json" }),
       },
       body: body === undefined ? undefined : JSON.stringify(body),
-      credentials: "same-origin"
+      credentials: "same-origin",
+      signal: AbortSignal.timeout(12000),
     });
   } catch {
     throw new ApiError("network_error", "Le Hub est injoignable.", 0);
@@ -37,7 +38,7 @@ async function request(path, { method = "GET", body } = {}) {
       data?.error || `http_${response.status}`,
       data?.message || `Erreur ${response.status}`,
       response.status,
-      data
+      data,
     );
   }
   return data;

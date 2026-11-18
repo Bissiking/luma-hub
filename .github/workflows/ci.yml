@@ -1,0 +1,31 @@
+# .github/workflows/ci.yml
+name: LUMA Hub CI
+
+on:
+  push:
+    branches: ["1.x.x", "prod"]
+  pull_request:
+    branches: ["1.x.x", "prod"]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: ["22", "24"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Verify package and lockfile version
+        run: node -e "const p=require('./package.json');const l=require('./package-lock.json');if(p.version!==l.version || p.version!==l.packages[''].version)process.exit(1)"
+      - name: Check syntax
+        run: npm run check
+      - name: Run tests
+        run: npm test
+      - name: Verify browser asset graph
+        run: npm run build

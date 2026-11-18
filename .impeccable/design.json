@@ -1,0 +1,622 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-18T08:08:48.458439+00:00",
+  "title": "Design System: LUMA Hub",
+  "extensions": {
+    "colorMeta": {
+      "bg": {
+        "role": "neutral",
+        "displayName": "Fond de travail",
+        "tonalRamp": [
+          "oklch(15% 0.0041 121.56)",
+          "oklch(26.43% 0.0041 121.56)",
+          "oklch(37.86% 0.0041 121.56)",
+          "oklch(49.29% 0.0041 121.56)",
+          "oklch(60.71% 0.0041 121.56)",
+          "oklch(72.14% 0.0041 121.56)",
+          "oklch(83.57% 0.0041 121.56)",
+          "oklch(95% 0.0041 121.56)"
+        ]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Papier de panneau",
+        "tonalRamp": [
+          "oklch(15% 0.0000 89.88)",
+          "oklch(26.43% 0.0000 89.88)",
+          "oklch(37.86% 0.0000 89.88)",
+          "oklch(49.29% 0.0000 89.88)",
+          "oklch(60.71% 0.0000 89.88)",
+          "oklch(72.14% 0.0000 89.88)",
+          "oklch(83.57% 0.0000 89.88)",
+          "oklch(95% 0.0000 89.88)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface de proximité",
+        "tonalRamp": [
+          "oklch(15% 0.0062 137.77)",
+          "oklch(26.43% 0.0062 137.77)",
+          "oklch(37.86% 0.0062 137.77)",
+          "oklch(49.29% 0.0062 137.77)",
+          "oklch(60.71% 0.0062 137.77)",
+          "oklch(72.14% 0.0062 137.77)",
+          "oklch(83.57% 0.0062 137.77)",
+          "oklch(95% 0.0062 137.77)"
+        ]
+      },
+      "surface-hover": {
+        "role": "neutral",
+        "displayName": "Surface de réponse",
+        "tonalRamp": [
+          "oklch(15% 0.0091 161.35)",
+          "oklch(26.43% 0.0091 161.35)",
+          "oklch(37.86% 0.0091 161.35)",
+          "oklch(49.29% 0.0091 161.35)",
+          "oklch(60.71% 0.0091 161.35)",
+          "oklch(72.14% 0.0091 161.35)",
+          "oklch(83.57% 0.0091 161.35)",
+          "oklch(95% 0.0091 161.35)"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Encre de lecture",
+        "tonalRamp": [
+          "oklch(15% 0.0211 211.45)",
+          "oklch(26.43% 0.0211 211.45)",
+          "oklch(37.86% 0.0211 211.45)",
+          "oklch(49.29% 0.0211 211.45)",
+          "oklch(60.71% 0.0211 211.45)",
+          "oklch(72.14% 0.0211 211.45)",
+          "oklch(83.57% 0.0211 211.45)",
+          "oklch(95% 0.0211 211.45)"
+        ]
+      },
+      "text-2": {
+        "role": "neutral",
+        "displayName": "Encre secondaire",
+        "tonalRamp": [
+          "oklch(15% 0.0211 214.59)",
+          "oklch(26.43% 0.0211 214.59)",
+          "oklch(37.86% 0.0211 214.59)",
+          "oklch(49.29% 0.0211 214.59)",
+          "oklch(60.71% 0.0211 214.59)",
+          "oklch(72.14% 0.0211 214.59)",
+          "oklch(83.57% 0.0211 214.59)",
+          "oklch(95% 0.0211 214.59)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Encre de métadonnées",
+        "tonalRamp": [
+          "oklch(15% 0.0198 210.21)",
+          "oklch(26.43% 0.0198 210.21)",
+          "oklch(37.86% 0.0198 210.21)",
+          "oklch(49.29% 0.0198 210.21)",
+          "oklch(60.71% 0.0198 210.21)",
+          "oklch(72.14% 0.0198 210.21)",
+          "oklch(83.57% 0.0198 210.21)",
+          "oklch(95% 0.0198 210.21)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Trait de structure",
+        "tonalRamp": [
+          "oklch(15% 0.0093 161.33)",
+          "oklch(26.43% 0.0093 161.33)",
+          "oklch(37.86% 0.0093 161.33)",
+          "oklch(49.29% 0.0093 161.33)",
+          "oklch(60.71% 0.0093 161.33)",
+          "oklch(72.14% 0.0093 161.33)",
+          "oklch(83.57% 0.0093 161.33)",
+          "oklch(95% 0.0093 161.33)"
+        ]
+      },
+      "line-strong": {
+        "role": "neutral",
+        "displayName": "Trait renforcé",
+        "tonalRamp": [
+          "oklch(15% 0.0232 171.57)",
+          "oklch(26.43% 0.0232 171.57)",
+          "oklch(37.86% 0.0232 171.57)",
+          "oklch(49.29% 0.0232 171.57)",
+          "oklch(60.71% 0.0232 171.57)",
+          "oklch(72.14% 0.0232 171.57)",
+          "oklch(83.57% 0.0232 171.57)",
+          "oklch(95% 0.0232 171.57)"
+        ]
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Pétrole d’action",
+        "tonalRamp": [
+          "oklch(15% 0.0568 198.50)",
+          "oklch(26.43% 0.0568 198.50)",
+          "oklch(37.86% 0.0568 198.50)",
+          "oklch(49.29% 0.0568 198.50)",
+          "oklch(60.71% 0.0568 198.50)",
+          "oklch(72.14% 0.0568 198.50)",
+          "oklch(83.57% 0.0568 198.50)",
+          "oklch(95% 0.0568 198.50)"
+        ]
+      },
+      "accent-2": {
+        "role": "primary",
+        "displayName": "Pétrole de réponse",
+        "tonalRamp": [
+          "oklch(15% 0.0699 192.47)",
+          "oklch(26.43% 0.0699 192.47)",
+          "oklch(37.86% 0.0699 192.47)",
+          "oklch(49.29% 0.0699 192.47)",
+          "oklch(60.71% 0.0699 192.47)",
+          "oklch(72.14% 0.0699 192.47)",
+          "oklch(83.57% 0.0699 192.47)",
+          "oklch(95% 0.0699 192.47)"
+        ]
+      },
+      "accent-soft": {
+        "role": "primary",
+        "displayName": "Pétrole diffus",
+        "tonalRamp": [
+          "oklch(15% 0.0160 192.07)",
+          "oklch(26.43% 0.0160 192.07)",
+          "oklch(37.86% 0.0160 192.07)",
+          "oklch(49.29% 0.0160 192.07)",
+          "oklch(60.71% 0.0160 192.07)",
+          "oklch(72.14% 0.0160 192.07)",
+          "oklch(83.57% 0.0160 192.07)",
+          "oklch(95% 0.0160 192.07)"
+        ]
+      },
+      "amber": {
+        "role": "secondary",
+        "displayName": "Ambre de repère",
+        "tonalRamp": [
+          "oklch(15% 0.1025 65.24)",
+          "oklch(26.43% 0.1025 65.24)",
+          "oklch(37.86% 0.1025 65.24)",
+          "oklch(49.29% 0.1025 65.24)",
+          "oklch(60.71% 0.1025 65.24)",
+          "oklch(72.14% 0.1025 65.24)",
+          "oklch(83.57% 0.1025 65.24)",
+          "oklch(95% 0.1025 65.24)"
+        ]
+      },
+      "danger": {
+        "role": "semantic",
+        "displayName": "Erreur",
+        "tonalRamp": [
+          "oklch(15% 0.1474 23.00)",
+          "oklch(26.43% 0.1474 23.00)",
+          "oklch(37.86% 0.1474 23.00)",
+          "oklch(49.29% 0.1474 23.00)",
+          "oklch(60.71% 0.1474 23.00)",
+          "oklch(72.14% 0.1474 23.00)",
+          "oklch(83.57% 0.1474 23.00)",
+          "oklch(95% 0.1474 23.00)"
+        ]
+      },
+      "success": {
+        "role": "semantic",
+        "displayName": "État positif",
+        "tonalRamp": [
+          "oklch(15% 0.0987 141.24)",
+          "oklch(26.43% 0.0987 141.24)",
+          "oklch(37.86% 0.0987 141.24)",
+          "oklch(49.29% 0.0987 141.24)",
+          "oklch(60.71% 0.0987 141.24)",
+          "oklch(72.14% 0.0987 141.24)",
+          "oklch(83.57% 0.0987 141.24)",
+          "oklch(95% 0.0987 141.24)"
+        ]
+      },
+      "dark-bg": {
+        "role": "neutral",
+        "displayName": "Fond de travail · sombre",
+        "tonalRamp": [
+          "oklch(15% 0.0124 214.68)",
+          "oklch(26.43% 0.0124 214.68)",
+          "oklch(37.86% 0.0124 214.68)",
+          "oklch(49.29% 0.0124 214.68)",
+          "oklch(60.71% 0.0124 214.68)",
+          "oklch(72.14% 0.0124 214.68)",
+          "oklch(83.57% 0.0124 214.68)",
+          "oklch(95% 0.0124 214.68)"
+        ]
+      },
+      "dark-panel": {
+        "role": "neutral",
+        "displayName": "Papier de panneau · sombre",
+        "tonalRamp": [
+          "oklch(15% 0.0158 209.92)",
+          "oklch(26.43% 0.0158 209.92)",
+          "oklch(37.86% 0.0158 209.92)",
+          "oklch(49.29% 0.0158 209.92)",
+          "oklch(60.71% 0.0158 209.92)",
+          "oklch(72.14% 0.0158 209.92)",
+          "oklch(83.57% 0.0158 209.92)",
+          "oklch(95% 0.0158 209.92)"
+        ]
+      },
+      "dark-surface": {
+        "role": "neutral",
+        "displayName": "Surface de proximité · sombre",
+        "tonalRamp": [
+          "oklch(15% 0.0192 207.07)",
+          "oklch(26.43% 0.0192 207.07)",
+          "oklch(37.86% 0.0192 207.07)",
+          "oklch(49.29% 0.0192 207.07)",
+          "oklch(60.71% 0.0192 207.07)",
+          "oklch(72.14% 0.0192 207.07)",
+          "oklch(83.57% 0.0192 207.07)",
+          "oklch(95% 0.0192 207.07)"
+        ]
+      },
+      "dark-surface-hover": {
+        "role": "neutral",
+        "displayName": "Surface de réponse · sombre",
+        "tonalRamp": [
+          "oklch(15% 0.0255 199.94)",
+          "oklch(26.43% 0.0255 199.94)",
+          "oklch(37.86% 0.0255 199.94)",
+          "oklch(49.29% 0.0255 199.94)",
+          "oklch(60.71% 0.0255 199.94)",
+          "oklch(72.14% 0.0255 199.94)",
+          "oklch(83.57% 0.0255 199.94)",
+          "oklch(95% 0.0255 199.94)"
+        ]
+      },
+      "dark-text": {
+        "role": "neutral",
+        "displayName": "Encre de lecture · sombre",
+        "tonalRamp": [
+          "oklch(15% 0.0083 157.09)",
+          "oklch(26.43% 0.0083 157.09)",
+          "oklch(37.86% 0.0083 157.09)",
+          "oklch(49.29% 0.0083 157.09)",
+          "oklch(60.71% 0.0083 157.09)",
+          "oklch(72.14% 0.0083 157.09)",
+          "oklch(83.57% 0.0083 157.09)",
+          "oklch(95% 0.0083 157.09)"
+        ]
+      },
+      "dark-text-2": {
+        "role": "neutral",
+        "displayName": "Encre secondaire · sombre",
+        "tonalRamp": [
+          "oklch(15% 0.0141 174.10)",
+          "oklch(26.43% 0.0141 174.10)",
+          "oklch(37.86% 0.0141 174.10)",
+          "oklch(49.29% 0.0141 174.10)",
+          "oklch(60.71% 0.0141 174.10)",
+          "oklch(72.14% 0.0141 174.10)",
+          "oklch(83.57% 0.0141 174.10)",
+          "oklch(95% 0.0141 174.10)"
+        ]
+      },
+      "dark-muted": {
+        "role": "neutral",
+        "displayName": "Encre de métadonnées · sombre",
+        "tonalRamp": [
+          "oklch(15% 0.0226 174.78)",
+          "oklch(26.43% 0.0226 174.78)",
+          "oklch(37.86% 0.0226 174.78)",
+          "oklch(49.29% 0.0226 174.78)",
+          "oklch(60.71% 0.0226 174.78)",
+          "oklch(72.14% 0.0226 174.78)",
+          "oklch(83.57% 0.0226 174.78)",
+          "oklch(95% 0.0226 174.78)"
+        ]
+      },
+      "dark-line": {
+        "role": "neutral",
+        "displayName": "Trait de structure · sombre",
+        "tonalRamp": [
+          "oklch(15% 0.0230 204.69)",
+          "oklch(26.43% 0.0230 204.69)",
+          "oklch(37.86% 0.0230 204.69)",
+          "oklch(49.29% 0.0230 204.69)",
+          "oklch(60.71% 0.0230 204.69)",
+          "oklch(72.14% 0.0230 204.69)",
+          "oklch(83.57% 0.0230 204.69)",
+          "oklch(95% 0.0230 204.69)"
+        ]
+      },
+      "dark-line-strong": {
+        "role": "neutral",
+        "displayName": "Trait renforcé · sombre",
+        "tonalRamp": [
+          "oklch(15% 0.0333 180.56)",
+          "oklch(26.43% 0.0333 180.56)",
+          "oklch(37.86% 0.0333 180.56)",
+          "oklch(49.29% 0.0333 180.56)",
+          "oklch(60.71% 0.0333 180.56)",
+          "oklch(72.14% 0.0333 180.56)",
+          "oklch(83.57% 0.0333 180.56)",
+          "oklch(95% 0.0333 180.56)"
+        ]
+      },
+      "dark-accent": {
+        "role": "primary",
+        "displayName": "Pétrole d’action · sombre",
+        "tonalRamp": [
+          "oklch(15% 0.0627 180.72)",
+          "oklch(26.43% 0.0627 180.72)",
+          "oklch(37.86% 0.0627 180.72)",
+          "oklch(49.29% 0.0627 180.72)",
+          "oklch(60.71% 0.0627 180.72)",
+          "oklch(72.14% 0.0627 180.72)",
+          "oklch(83.57% 0.0627 180.72)",
+          "oklch(95% 0.0627 180.72)"
+        ]
+      },
+      "dark-accent-2": {
+        "role": "primary",
+        "displayName": "Pétrole de réponse · sombre",
+        "tonalRamp": [
+          "oklch(15% 0.0491 181.90)",
+          "oklch(26.43% 0.0491 181.90)",
+          "oklch(37.86% 0.0491 181.90)",
+          "oklch(49.29% 0.0491 181.90)",
+          "oklch(60.71% 0.0491 181.90)",
+          "oklch(72.14% 0.0491 181.90)",
+          "oklch(83.57% 0.0491 181.90)",
+          "oklch(95% 0.0491 181.90)"
+        ]
+      },
+      "dark-accent-soft": {
+        "role": "primary",
+        "displayName": "Pétrole diffus · sombre",
+        "tonalRamp": [
+          "oklch(15% 0.0432 186.34)",
+          "oklch(26.43% 0.0432 186.34)",
+          "oklch(37.86% 0.0432 186.34)",
+          "oklch(49.29% 0.0432 186.34)",
+          "oklch(60.71% 0.0432 186.34)",
+          "oklch(72.14% 0.0432 186.34)",
+          "oklch(83.57% 0.0432 186.34)",
+          "oklch(95% 0.0432 186.34)"
+        ]
+      },
+      "dark-amber": {
+        "role": "secondary",
+        "displayName": "Ambre de repère · sombre",
+        "tonalRamp": [
+          "oklch(15% 0.1041 78.21)",
+          "oklch(26.43% 0.1041 78.21)",
+          "oklch(37.86% 0.1041 78.21)",
+          "oklch(49.29% 0.1041 78.21)",
+          "oklch(60.71% 0.1041 78.21)",
+          "oklch(72.14% 0.1041 78.21)",
+          "oklch(83.57% 0.1041 78.21)",
+          "oklch(95% 0.1041 78.21)"
+        ]
+      },
+      "dark-danger": {
+        "role": "semantic",
+        "displayName": "Erreur · sombre",
+        "tonalRamp": [
+          "oklch(15% 0.1044 19.57)",
+          "oklch(26.43% 0.1044 19.57)",
+          "oklch(37.86% 0.1044 19.57)",
+          "oklch(49.29% 0.1044 19.57)",
+          "oklch(60.71% 0.1044 19.57)",
+          "oklch(72.14% 0.1044 19.57)",
+          "oklch(83.57% 0.1044 19.57)",
+          "oklch(95% 0.1044 19.57)"
+        ]
+      },
+      "dark-success": {
+        "role": "semantic",
+        "displayName": "État positif · sombre",
+        "tonalRamp": [
+          "oklch(15% 0.0912 137.23)",
+          "oklch(26.43% 0.0912 137.23)",
+          "oklch(37.86% 0.0912 137.23)",
+          "oklch(49.29% 0.0912 137.23)",
+          "oklch(60.71% 0.0912 137.23)",
+          "oklch(72.14% 0.0912 137.23)",
+          "oklch(83.57% 0.0912 137.23)",
+          "oklch(95% 0.0912 137.23)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Titre de page",
+        "purpose": "Hiérarchie principale de la vue."
+      },
+      "title": {
+        "displayName": "Titre de section",
+        "purpose": "Groupes fonctionnels et sections."
+      },
+      "body": {
+        "displayName": "Corps",
+        "purpose": "Lecture courante."
+      },
+      "label": {
+        "displayName": "Libellé",
+        "purpose": "Actions et accès."
+      },
+      "metadata": {
+        "displayName": "Métadonnée",
+        "purpose": "Sources, dates et états secondaires."
+      },
+      "clock": {
+        "displayName": "Horloge",
+        "purpose": "Heure avec chiffres tabulaires."
+      }
+    },
+    "shadows": [
+      {
+        "name": "dialog-toast-light",
+        "value": "0 12px 36px #15272420",
+        "purpose": "Dialogues et notifications en thème clair."
+      },
+      {
+        "name": "dialog-toast-dark",
+        "value": "0 16px 40px #0005",
+        "purpose": "Dialogues et notifications en thème sombre."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-transition",
+        "value": "background-color 0.15s ease, color 0.15s ease",
+        "purpose": "Réponse des actions, seulement sans réduction des animations."
+      },
+      {
+        "name": "dialog-reveal",
+        "value": "transform: translateY(5px) → none; 0.15s ease-out",
+        "purpose": "Ouverture des dialogues, seulement sans réduction des animations."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "mobile-max",
+        "value": "700px"
+      },
+      {
+        "name": "tablet-shell-max",
+        "value": "1050px"
+      },
+      {
+        "name": "tablet-widgets-max",
+        "value": "1150px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Bouton standard",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "Action libellée avec état de focus et réponse au survol.",
+      "html": "<button class=\"ds-btn-standard\">Enregistrer</button>",
+      "css": ".ds-btn-standard{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;border:1px solid var(--line-strong,#a5b8b1);border-radius:7px;padding:9px 14px;background:var(--panel,#fff);color:var(--text,#172629);font:600 13px/1.3 ui-sans-serif,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;cursor:pointer;}.ds-btn-standard:hover:not(:disabled){background:var(--surface-hover,#e7eeea)}.ds-btn-standard:focus-visible{outline:2px solid var(--accent,#174f51);outline-offset:3px;}.ds-btn-standard:disabled{opacity:.5;cursor:not-allowed}@media(max-width:700px){.ds-btn-standard{min-height:44px}}@media(prefers-reduced-motion:no-preference){.ds-btn-standard{transition:background-color .15s ease,color .15s ease}}"
+    },
+    {
+      "name": "Bouton principal",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Action libellée avec état de focus et réponse au survol.",
+      "html": "<button class=\"ds-btn-primary\">Enregistrer</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;border:1px solid var(--line-strong,#a5b8b1);border-radius:7px;padding:9px 14px;background:var(--panel,#fff);color:var(--text,#172629);font:600 13px/1.3 ui-sans-serif,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;cursor:pointer;background:var(--accent,#174f51);color:var(--panel,#fff);border-color:transparent;}.ds-btn-primary:hover:not(:disabled){background:var(--accent-2,#236b69)}.ds-btn-primary:focus-visible{outline:2px solid var(--accent,#174f51);outline-offset:3px;}.ds-btn-primary:disabled{opacity:.5;cursor:not-allowed}@media(max-width:700px){.ds-btn-primary{min-height:44px}}@media(prefers-reduced-motion:no-preference){.ds-btn-primary{transition:background-color .15s ease,color .15s ease}}"
+    },
+    {
+      "name": "Bouton doux",
+      "kind": "button",
+      "refersTo": "button-soft",
+      "description": "Action libellée avec état de focus et réponse au survol.",
+      "html": "<button class=\"ds-btn-soft\">Enregistrer</button>",
+      "css": ".ds-btn-soft{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;border:1px solid var(--line-strong,#a5b8b1);border-radius:7px;padding:9px 14px;background:var(--panel,#fff);color:var(--text,#172629);font:600 13px/1.3 ui-sans-serif,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;cursor:pointer;background:var(--surface,#eef1ed);border-color:transparent;}.ds-btn-soft:hover:not(:disabled){background:var(--surface-hover,#e7eeea)}.ds-btn-soft:focus-visible{outline:2px solid var(--accent,#174f51);outline-offset:3px;}.ds-btn-soft:disabled{opacity:.5;cursor:not-allowed}@media(max-width:700px){.ds-btn-soft{min-height:44px}}@media(prefers-reduced-motion:no-preference){.ds-btn-soft{transition:background-color .15s ease,color .15s ease}}"
+    },
+    {
+      "name": "Bouton fantôme",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Action libellée avec état de focus et réponse au survol.",
+      "html": "<button class=\"ds-btn-ghost\">Enregistrer</button>",
+      "css": ".ds-btn-ghost{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;border:1px solid var(--line-strong,#a5b8b1);border-radius:7px;padding:9px 14px;background:var(--panel,#fff);color:var(--text,#172629);font:600 13px/1.3 ui-sans-serif,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;cursor:pointer;background:transparent;}.ds-btn-ghost:hover:not(:disabled){background:var(--surface-hover,#e7eeea)}.ds-btn-ghost:focus-visible{outline:2px solid var(--accent,#174f51);outline-offset:3px;}.ds-btn-ghost:disabled{opacity:.5;cursor:not-allowed}@media(max-width:700px){.ds-btn-ghost{min-height:44px}}@media(prefers-reduced-motion:no-preference){.ds-btn-ghost{transition:background-color .15s ease,color .15s ease}}"
+    },
+    {
+      "name": "Champ de configuration",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "Saisie explicitement libellée dans les dialogues.",
+      "html": "<label class=\"ds-field\">Titre du widget<input placeholder=\"Mon widget\"></label>",
+      "css": ".ds-field{display:grid;gap:7px;color:var(--text,#172629);font:600 13px/1.5 ui-sans-serif,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif}.ds-field input{font:400 15px/1.5 ui-sans-serif,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;min-height:42px;padding:10px 12px;border:1px solid var(--line-strong,#a5b8b1);border-radius:6px;background:var(--panel,#fff);color:var(--text,#172629);caret-color:var(--accent,#174f51)}.ds-field input:focus-visible{outline:2px solid var(--accent,#174f51);outline-offset:3px;}"
+    },
+    {
+      "name": "Navigation active",
+      "kind": "nav",
+      "refersTo": "nav-active",
+      "description": "Accès courant identifié par le fond tonal et le libellé.",
+      "html": "<nav aria-label=\"Navigation\"><a class=\"ds-nav\" href=\"#/applications\" aria-current=\"page\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/></svg>Applications</a></nav>",
+      "css": ".ds-nav{display:flex;align-items:center;gap:12px;min-height:46px;padding:10px 12px;border-radius:6px;background:var(--accent-soft,#dcebea);color:var(--accent,#174f51);font:650 14px/1.5 ui-sans-serif,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;text-decoration:none}.ds-nav:focus-visible{outline:2px solid var(--accent,#174f51);outline-offset:3px;}.ds-nav:hover{background:var(--surface,#eef1ed)}"
+    },
+    {
+      "name": "Pastille de statut",
+      "kind": "chip",
+      "refersTo": "pill",
+      "description": "État informatif court, sans interaction.",
+      "html": "<span class=\"ds-pill\">Indisponible</span>",
+      "css": ".ds-pill{display:inline-block;white-space:nowrap;font:400 12px/1.5 ui-sans-serif,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;color:var(--muted,#5d6d70);background:var(--surface,#eef1ed);border-radius:5px;padding:3px 7px}"
+    },
+    {
+      "name": "Carte d’application",
+      "kind": "card",
+      "refersTo": "app-card",
+      "description": "Conteneur du catalogue avec action d’ouverture.",
+      "html": "<article class=\"ds-card\"><h3>Application</h3><p>Description issue du catalogue.</p><a href=\"#/applications\">Ouvrir <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></a></article>",
+      "css": ".ds-card{display:flex;flex-direction:column;gap:7px;border:1px solid var(--line,#d7deda);border-radius:var(--radius,10px);padding:20px;background:var(--panel,#fff);color:var(--text,#172629);font:400 15px/1.5 ui-sans-serif,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif}.ds-card h3{margin:0;font-size:17px;line-height:1.35}.ds-card p{margin:0 0 24px;font-size:13px;color:var(--muted,#5d6d70)}.ds-card a{display:flex;align-items:center;gap:8px;min-height:36px;margin-top:auto;font-size:13px;font-weight:600;color:var(--accent,#174f51);text-decoration:none}.ds-card a:hover{text-decoration:underline;text-underline-offset:4px}.ds-card a:focus-visible{outline:2px solid var(--accent,#174f51);outline-offset:3px;}@media(max-width:700px){.ds-card{padding:14px}}"
+    },
+    {
+      "name": "Widget",
+      "kind": "custom",
+      "refersTo": "widget",
+      "description": "En-tête et contenu partagés par les compositions.",
+      "html": "<article class=\"ds-widget\"><header><h2>Mon espace</h2><button aria-label=\"Actions du widget\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"5\" r=\"1.5\"/><circle cx=\"12\" cy=\"12\" r=\"1.5\"/><circle cx=\"12\" cy=\"19\" r=\"1.5\"/></svg></button></header><div>Vos accès utiles, réunis dans un widget.</div></article>",
+      "css": ".ds-widget{min-height:180px;border:1px solid var(--line,#d7deda);border-radius:var(--radius,10px);background:var(--panel,#fff);color:var(--text,#172629);font:400 15px/1.5 ui-sans-serif,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif}.ds-widget header{display:flex;align-items:center;gap:7px;min-height:48px;padding:14px 16px 0}.ds-widget h2{margin:0;flex:1;font-size:16px;line-height:1.3;letter-spacing:-.015em}.ds-widget button{display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:6px;color:var(--muted,#5d6d70);background:none;cursor:pointer}.ds-widget button:hover{background:var(--surface-hover,#e7eeea)}.ds-widget button:focus-visible{outline:2px solid var(--accent,#174f51);outline-offset:3px;}.ds-widget>div{padding:12px 18px 20px}@media(max-width:700px){.ds-widget button{width:44px;height:44px}}"
+    },
+    {
+      "name": "Tuile de lancement",
+      "kind": "custom",
+      "refersTo": "launch-tile",
+      "description": "Accès compact à une application du catalogue.",
+      "html": "<a class=\"ds-launch\" href=\"#/applications\"><span class=\"ds-launch-logo\">A</span><span>Application</span><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></a>",
+      "css": ".ds-launch{display:flex;align-items:center;gap:10px;min-height:52px;padding:9px 10px;border:1px solid var(--line,#d7deda);border-radius:7px;color:var(--text,#172629);font:600 13px/1.5 ui-sans-serif,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;text-decoration:none}.ds-launch-logo{display:grid;place-items:center;width:32px;height:32px;border-radius:5px;background:var(--accent-soft,#dcebea);color:var(--accent,#174f51);font-size:12px;font-weight:700}.ds-launch svg{margin-left:auto;color:var(--accent,#174f51)}.ds-launch:hover{background:var(--surface,#eef1ed)}.ds-launch:focus-visible{outline:2px solid var(--accent,#174f51);outline-offset:3px;}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Le plan de travail LUMA",
+    "overview": "Le Hub est une surface de travail professionnelle en français. Des neutres calmes, un pétrole fonctionnel et des séparateurs fins mettent les applications et les widgets au premier plan. La géométrie du L de marque apporte l'identité sans illustration ni texture dans le produit.\n\nLa densité reste pratique : actions proches de leur objet, titres courts, métadonnées secondaires et états de sauvegarde visibles. Les cinq compositions partagent les mêmes composants et la même palette ; leur structure varie réellement. Le thème suit automatiquement le système, conformément au choix utilisateur consigné dans PRODUCT.md.",
+    "keyCharacteristics": [
+      "Surfaces plates et contrastes tonaux.",
+      "Pétrole pour les actions et sélections, ambre pour les favoris et la marque.",
+      "Typographie système fonctionnelle, chiffres horaires tabulaires.",
+      "Navigation latérale sur grand écran, navigation basse sur téléphone.",
+      "Compositions et dispositions indépendantes pour desktop et mobile."
+    ],
+    "rules": [
+      {
+        "name": "The System Theme Rule",
+        "body": "L'apparence suit `prefers-color-scheme`. Une nouvelle surface emploie les rôles CSS existants afin de conserver la lisibilité dans les deux thèmes.",
+        "section": "colors"
+      },
+      {
+        "name": "The Readable Metadata Rule",
+        "body": "Une information secondaire reste lisible et nommée : conserver le plancher de 12px et les rôles de texte du thème actif.",
+        "section": "typography"
+      },
+      {
+        "name": "The Shared Engine Rule",
+        "body": "Les compositions changent la hiérarchie et la disposition ; elles réutilisent les composants, les états et les interactions métier communs.",
+        "section": "layout"
+      },
+      {
+        "name": "The Single Depth Cue Rule",
+        "body": "Le contour définit un popover ; l'ombre définit un dialogue. Les cartes et widgets au repos ne reçoivent pas d'ombre décorative.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** utiliser les rôles CSS existants pour les deux thèmes système.",
+      "**Do** conserver des métadonnées d'au moins 12px et des contrôles tactiles adaptés sur mobile.",
+      "**Do** partager les composants et les états entre les cinq compositions.",
+      "**Do** rendre les données indisponibles, les erreurs et l'état de sauvegarde explicites.",
+      "**Do** proposer une commande clavier équivalente pour organiser les widgets."
+    ],
+    "donts": [
+      "**Don't** ajouter de bannière marketing ou d'illustration décorative à la surface de travail.",
+      "**Don't** généraliser le violet ou employer l'ambre comme couleur de toute action.",
+      "**Don't** cumuler ombre et bordure extérieure pour les dialogues ou ajouter une ombre aux popovers.",
+      "**Don't** comprimer la barre latérale desktop sur téléphone.",
+      "**Don't** transformer les exemples synthétiques des captures en données métier du produit."
+    ]
+  }
+}
