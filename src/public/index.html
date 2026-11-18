@@ -1,213 +1,202 @@
 <!doctype html>
 <html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0b0d16">
-  <meta name="description" content="LUMA Hub — le lanceur central de l'écosystème mhemery.fr, propulsé par Kyros.">
-  <title>LUMA Hub — mhemery.fr</title>
-  <link rel="icon" href="/favicon.ico" sizes="32x32">
-  <link rel="apple-touch-icon" href="/logo128.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap">
-  <link rel="stylesheet" href="/styles/tokens.css">
-  <link rel="stylesheet" href="/styles/shell.css">
-  <link rel="stylesheet" href="/styles/ui.css">
-  <link rel="stylesheet" href="/styles/home.css">
-</head>
-<body data-account-context="personal">
-
-  <!-- ================================================================ -->
-  <!-- Visiteur non connecté                                            -->
-  <!-- ================================================================ -->
-  <div id="guestView" class="guest hidden">
-    <div class="guest-inner">
-      <header class="guest-brand">
-        <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true">
-          <defs>
-            <linearGradient id="markGuest" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#8f7bff"/><stop offset="1" stop-color="#4f8bff"/>
-            </linearGradient>
-          </defs>
-          <rect x="4" y="4" width="56" height="56" rx="16" fill="url(#markGuest)" opacity=".16"/>
-          <path d="M17 46V18h7.4l7.6 16.2L40 18h7.2v28h-6.6V30.4L33.6 44h-4.2l-7-13.6V46z" fill="url(#markGuest)"/>
-        </svg>
-        <span class="brand-name">mhemery.fr</span>
-        <span class="brand-suffix">HUB</span>
-      </header>
-
-      <div class="guest-grid">
-        <div class="guest-copy">
-          <span class="badge">BIENVENUE</span>
-          <h1>Votre point d'entrée<br>sur <em>mhemery.fr</em> Hub</h1>
-          <p class="lead">Le lanceur central de votre écosystème. Accédez à toutes vos applications, services et ressources depuis un seul endroit.</p>
-          <p class="lead muted">Kyros gère votre identité, votre session et votre contexte d'accès pour une expérience unifiée et sécurisée.</p>
-          <div class="hero-actions">
-            <a class="btn btn-primary" href="/auth/login">Se connecter avec Kyros <span class="btn-arrow">→</span></a>
-          </div>
-        </div>
-        <div class="guest-visual" aria-hidden="true">
-          <div class="kyros-card">
-            <div class="kyros-card-glow"></div>
-            <img src="/logo128.png" alt="LUMA" class="luma-logo">
-            <span class="kyros-word">LUMA</span>
-          </div>
-        </div>
-      </div>
-
-      <footer class="guest-footer">mhemery.fr · propulsé par Kyros V5</footer>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta
+      name="theme-color"
+      content="#174f51"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#131b1d"
+      media="(prefers-color-scheme: dark)"
+    />
+    <meta
+      name="description"
+      content="LUMA Hub — votre workspace, vos applications et vos widgets, connecté à Kyros."
+    />
+    <title>LUMA Hub</title>
+    <meta name="luma-asset-prefix" content="__HUB_ASSET_PREFIX__" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/logo128.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="stylesheet" href="/styles/tokens.css" />
+    <link rel="stylesheet" href="/styles/shell.css" />
+    <link rel="stylesheet" href="/styles/ui.css" />
+    <link rel="stylesheet" href="/styles/home.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#view">Aller au contenu</a>
+    <div id="bootStatus" class="boot-status" role="status">
+      Chargement de LUMA Hub…
     </div>
-  </div>
-
-  <!-- ================================================================ -->
-  <!-- Application (connecté)                                           -->
-  <!-- ================================================================ -->
-  <div id="appShell" class="app hidden">
-    <aside class="sidebar" id="sidebar">
-      <a class="brand" href="#/">
-        <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true">
-          <defs>
-            <linearGradient id="markApp" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#8f7bff"/><stop offset="1" stop-color="#4f8bff"/>
-            </linearGradient>
-          </defs>
-          <rect x="4" y="4" width="56" height="56" rx="16" fill="url(#markApp)" opacity=".16"/>
-          <path d="M17 46V18h7.4l7.6 16.2L40 18h7.2v28h-6.6V30.4L33.6 44h-4.2l-7-13.6V46z" fill="url(#markApp)"/>
-        </svg>
-        <span class="brand-copy">
-          <strong>mhemery.fr</strong>
-          <span>HUB</span>
-        </span>
-      </a>
-
-      <nav class="nav" aria-label="Navigation principale">
-        <a class="nav-link" data-route="accueil" href="#/">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>
-          <span>Accueil</span>
-        </a>
-        <a class="nav-link" data-route="applications" href="#/applications">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.6"/></svg>
-          <span>Applications</span>
-        </a>
-        <a class="nav-link" data-route="favoris" href="#/favoris">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.6 9.7l5.8-.8z"/></svg>
-          <span>Favoris</span>
-          <span class="nav-count hidden" id="navFavoritesCount">0</span>
-        </a>
-        <a class="nav-link" data-route="recents" href="#/recents">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>
-          <span>Récents</span>
-        </a>
+    <section id="guestView" class="guest hidden" aria-labelledby="guestTitle">
+      <a class="brand" href="/"
+        ><span class="brand-symbol" aria-hidden="true"></span
+        ><strong>LUMA</strong><span>Hub</span></a
+      >
+      <div class="guest-copy">
+        <h1 id="guestTitle">Votre espace.<br />Vos applications.</h1>
+        <p class="lead">Retrouvez vos favoris et composez votre workspace.</p>
+        <a class="btn btn-primary" href="/auth/login"
+          >Se connecter avec Kyros <span aria-hidden="true">→</span></a
+        >
+        <p class="guest-note">
+          Votre identité et vos accès restent gérés par Kyros.
+        </p>
+      </div>
+      <footer>LUMA Hub · mhemery.fr</footer>
+    </section>
+    <div id="appShell" class="app hidden">
+      <aside class="sidebar" aria-label="Navigation ordinateur">
+        <a class="brand" href="#/"
+          ><span class="brand-symbol" aria-hidden="true"></span
+          ><strong>LUMA</strong><span>Hub</span></a
+        >
+        <a class="space-selector" href="#/personnaliser"
+          ><span data-icon="user"></span><span>Personnel</span
+          ><span data-icon="right"></span
+        ></a>
+        <nav class="nav" aria-label="Navigation principale">
+          <a class="nav-link" data-route="accueil" href="#/"
+            ><span data-icon="home"></span><span>Workspace</span></a
+          >
+          <a class="nav-link" data-route="applications" href="#/applications"
+            ><span data-icon="grid"></span><span>Applications</span></a
+          >
+          <a class="nav-link" data-route="favoris" href="#/favoris"
+            ><span data-icon="star"></span><span>Favoris</span
+            ><span class="nav-count hidden" id="navFavoritesCount">0</span></a
+          >
+          <a class="nav-link" data-route="recents" href="#/recents"
+            ><span data-icon="clock"></span><span>Récents</span></a
+          >
+          <a class="nav-link" data-route="personnaliser" href="#/personnaliser"
+            ><span data-icon="settings"></span><span>Personnaliser</span></a
+          >
+        </nav>
+        <a
+          id="sidebarKyrosAccount"
+          class="sidebar-account"
+          href="#"
+          target="_blank"
+          rel="noopener"
+          ><span data-icon="user"></span>Compte Kyros<span
+            data-icon="external"
+          ></span
+        ></a>
+      </aside>
+      <div class="main">
+        <header class="topbar">
+          <a class="brand mobile-brand" href="#/"
+            ><span class="brand-symbol" aria-hidden="true"></span
+            ><strong>LUMA</strong></a
+          >
+          <button
+            class="searchbox"
+            id="searchTrigger"
+            aria-label="Rechercher une application ou une page"
+          >
+            <span data-icon="search"></span
+            ><span>Rechercher une application…</span><kbd>⌘ K</kbd>
+          </button>
+          <button
+            id="userChip"
+            class="user-chip"
+            popovertarget="accountMenu"
+            aria-label="Ouvrir le menu du compte"
+          >
+            <span class="avatar" id="topbarAvatar">·</span
+            ><span id="topbarName"></span><span data-icon="right"></span>
+          </button>
+        </header>
+        <main id="view" class="view" tabindex="-1"></main>
+        <footer class="app-footer">
+          <span>LUMA Hub <span id="footerVersion"></span></span
+          ><span>mhemery.fr</span>
+        </footer>
+      </div>
+      <nav class="mobile-nav" aria-label="Navigation mobile">
+        <a class="nav-link" data-route="accueil" href="#/"
+          ><span data-icon="home"></span><span>Espace</span></a
+        >
+        <a class="nav-link" data-route="applications" href="#/applications"
+          ><span data-icon="grid"></span><span>Apps</span></a
+        >
+        <a class="nav-link" data-route="favoris" href="#/favoris"
+          ><span data-icon="star"></span><span>Favoris</span></a
+        >
+        <a class="nav-link" data-route="personnaliser" href="#/personnaliser"
+          ><span data-icon="settings"></span><span>Réglages</span></a
+        >
       </nav>
-
-      <div class="promo">
-        <span class="promo-icon">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 17 2.2-8.5L12 13l5.8-4.5L20 17z"/><path d="M4 20h16"/></svg>
-        </span>
-        <h3>Tout votre écosystème au même endroit</h3>
-        <p>Accédez rapidement à vos applications, services et ressources mhemery.fr.</p>
-        <a class="btn btn-primary btn-block" href="#/applications">Explorer le Hub <span class="btn-arrow">→</span></a>
-      </div>
-    </aside>
-    <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
-
-    <div class="main">
-      <header class="topbar">
-        <button class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-        </button>
-
-        <button class="searchbox" id="searchTrigger" type="button">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
-          <span class="searchbox-text">Rechercher une application, une page, un service...</span>
-          <kbd>⌘ K</kbd>
-        </button>
-
-        <div class="topbar-actions">
-          <div class="dropdown" id="notifDropdown">
-            <button class="icon-btn" id="notifButton" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Notifications">
-              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 15V10a6 6 0 1 0-12 0v5l-1.6 2.4h15.2z"/><path d="M10 20a2.2 2.2 0 0 0 4 0"/></svg>
-            </button>
-            <div class="dropdown-panel dropdown-panel--narrow" role="menu">
-              <h4>Notifications</h4>
-              <p class="muted small">Aucune notification pour le moment.</p>
-            </div>
-          </div>
-
-          <div class="dropdown" id="userDropdown">
-            <button class="user-chip" id="userChip" type="button" aria-haspopup="true" aria-expanded="false">
-              <span class="avatar" id="topbarAvatar">·</span>
-              <span class="user-chip-name" id="topbarName">…</span>
-              <svg class="icon icon-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
-            </button>
-            <div class="dropdown-panel dropdown-panel--user" role="menu">
-              <div class="user-panel-head">
-                <span class="avatar avatar--lg" id="menuAvatar">·</span>
-                <div>
-                  <strong id="menuName">…</strong>
-                  <span class="muted small" id="menuEmail"></span>
-                </div>
-              </div>
-              <a class="menu-item" id="openKyrosAccount" href="#" target="_blank" rel="noopener">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.8 20c1.2-3.4 4-5 7.2-5s6 1.6 7.2 5"/></svg>
-                Mon compte Kyros
-              </a>
-              <button class="menu-item menu-item--danger" id="logoutButton" type="button" role="menuitem">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h8"/><path d="M17 8.5 20.5 12 17 15.5M20 12h-9"/></svg>
-                Se déconnecter
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main id="view" class="view" tabindex="-1">
-        <div class="skeleton" aria-hidden="true">
-          <div class="skeleton-block skeleton-hero"></div>
-          <div class="skeleton-row">
-            <div class="skeleton-block skeleton-panel"></div>
-            <div class="skeleton-block skeleton-side"></div>
-          </div>
-        </div>
-      </main>
-
-      <footer class="app-footer">
-        <svg class="brand-mark brand-mark--xs" viewBox="0 0 64 64" aria-hidden="true">
-          <defs><linearGradient id="markFoot" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8f7bff"/><stop offset="1" stop-color="#4f8bff"/></linearGradient></defs>
-          <path d="M17 46V18h7.4l7.6 16.2L40 18h7.2v28h-6.6V30.4L33.6 44h-4.2l-7-13.6V46z" fill="url(#markFoot)"/>
-        </svg>
-        <span>LUMA Hub <span id="footerVersion"></span></span>
-        <span class="dot-sep">·</span>
-        <span>mhemery.fr</span>
-        <span class="dot-sep">·</span>
-        <span>propulsé par Kyros V5</span>
-      </footer>
     </div>
-  </div>
-
-  <!-- ================================================================ -->
-  <!-- Recherche globale (⌘K)                                          -->
-  <!-- ================================================================ -->
-  <div class="search-overlay hidden" id="searchOverlay" role="dialog" aria-modal="true" aria-label="Recherche">
-    <div class="search-backdrop" id="searchBackdrop"></div>
-    <div class="search-modal">
+    <div
+      id="accountMenu"
+      popover="auto"
+      class="account-menu"
+      aria-label="Compte"
+    >
+      <strong id="menuName"></strong><span id="menuEmail" class="muted"></span>
+      <a
+        id="openKyrosAccount"
+        class="menu-item"
+        href="#"
+        target="_blank"
+        rel="noopener"
+        ><span data-icon="user"></span>Mon compte Kyros</a
+      >
+      <a class="menu-item" href="#/recents"
+        ><span data-icon="clock"></span>Mes accès récents</a
+      >
+      <button class="menu-item danger" id="logoutButton">
+        <span data-icon="logout"></span>Se déconnecter
+      </button>
+      <p id="logoutError" role="alert"></p>
+    </div>
+    <dialog id="searchOverlay" class="search-dialog" aria-label="Recherche">
       <div class="search-input-row">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
-        <input id="searchInput" type="search" autocomplete="off" spellcheck="false" placeholder="Rechercher une application, une page, un service..." aria-label="Rechercher">
-        <kbd>ESC</kbd>
+        <span data-icon="search"></span
+        ><input
+          id="searchInput"
+          type="search"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="Application ou page…"
+          role="combobox"
+          aria-expanded="true"
+          aria-controls="searchResults"
+          aria-autocomplete="list"
+          aria-label="Rechercher"
+        /><button
+          class="icon-btn"
+          id="searchClose"
+          aria-label="Fermer la recherche"
+        >
+          <span data-icon="close"></span>
+        </button>
       </div>
-      <ul class="search-results" id="searchResults" role="listbox" aria-live="polite"></ul>
-      <div class="search-hint">
-        <span><kbd>↑</kbd><kbd>↓</kbd> naviguer</span>
-        <span><kbd>↵</kbd> ouvrir</span>
-        <span><kbd>esc</kbd> fermer</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="toast-host" id="toastHost" aria-live="polite"></div>
-
-  <script type="module" src="/app.js"></script>
-</body>
+      <ul
+        class="search-results"
+        id="searchResults"
+        role="listbox"
+        aria-label="Résultats"
+      ></ul>
+      <p class="search-hint">
+        Flèches pour naviguer · Entrée pour ouvrir · Échap pour fermer
+      </p>
+    </dialog>
+    <div class="toast-host" id="toastHost" aria-live="polite"></div>
+    <noscript
+      ><p class="notice">
+        Activez JavaScript pour utiliser le workspace LUMA.
+      </p></noscript
+    >
+    <script type="module" src="/boot.js"></script>
+  </body>
 </html>

@@ -1,5 +1,3 @@
-// app.js — démarrage, routeur hash, interactions globales
-
 import {
   state,
   boot,
@@ -11,231 +9,167 @@ import {
   clearRecents,
   toggleFavorite,
   reloadCatalog,
-  recentItems,
-  kyrosUrl
+  kyrosUrl,
+  preferences,
 } from "./js/state.js";
 import * as api from "./js/api.js";
 import { ROUTES, routeFromHash, renderNotFound } from "./js/views.js";
 import { initSearch, closeSearch } from "./js/search.js";
-import { toast, launchApp } from "./js/ui.js";
-
+import { toast, launchApp, icon } from "./js/ui.js";
+import { initWorkspace } from "./js/workspace/controller.js";
+import {
+  loadWorkspace,
+  workspace,
+  composition,
+  clearWorkspaceCache,
+  hasUnsavedChanges,
+  flushWorkspace,
+} from "./js/workspace/store.js";
 const view = document.getElementById("view");
-const guestView = document.getElementById("guestView");
-const appShell = document.getElementById("appShell");
-
-let currentRoute = null;
-let rendering = false;
-
-// --------------------------------------------------------------- Routeur
-
-function updateNav() {
+const titles = {
+  accueil: "Workspace",
+  applications: "Applications",
+  favoris: "Favoris",
+  recents: "Récents",
+  personnaliser: "Personnaliser",
+};
+let previousRoute;
+function render() {
+  if (!isAuthenticated()) return;
+  const route = routeFromHash(location.hash),
+    routeChanged = route !== previousRoute;
+  const focus = view.contains(document.activeElement)
+    ? {
+        id: document.activeElement.id,
+        name: document.activeElement.name,
+        value: document.activeElement.value,
+        dataset: { ...document.activeElement.dataset },
+      }
+    : null;
+  const y = scrollY;
+  state.route = route || "notfound";
+  view.innerHTML = route ? ROUTES[route]() : renderNotFound();
+  document.body.dataset.composition = composition();
+  document.body.dataset.catalogLayout = preferences().display?.layout || "grid";
+  document.body.dataset.density =
+    preferences().display?.density || "comfortable";
+  document.title = `${titles[route] || "Page introuvable"} · LUMA Hub`;
   for (const link of document.querySelectorAll(".nav-link[data-route]")) {
-    const active = link.dataset.route === state.route;
+    const active = link.dataset.route === route;
     link.classList.toggle("is-active", active);
     if (active) link.setAttribute("aria-current", "page");
     else link.removeAttribute("aria-current");
   }
-
-  const count = favoriteIds().size;
   const badge = document.getElementById("navFavoritesCount");
-  if (badge) {
-    badge.textContent = String(count);
-    badge.classList.toggle("hidden", count === 0);
-  }
-}
-
-const TITLES = {
-  accueil: "Accueil",
-  applications: "Applications",
-  favoris: "Favoris",
-  recents: "Récents"
-};
-
-function render() {
-  if (!isAuthenticated() || rendering) return;
-
-  const route = routeFromHash(location.hash);
-  if (route === null) {
-    state.route = "notfound";
-    view.innerHTML = renderNotFound();
-    updateNav();
-    document.title = "Page introuvable — LUMA Hub";
-    return;
-  }
-
-  const routeChanged = route !== currentRoute;
+  badge.textContent = favoriteIds().size;
+  badge.classList.toggle("hidden", !favoriteIds().size);
+  const locked = workspace.status === "conflict" || Boolean(workspace.recovery);
+  view
+    .querySelectorAll(
+      "[data-composition], [data-widget-menu], [data-edit-workspace], [data-add-widget], [data-drag], [data-resize], [data-resize-drag], [data-move]",
+    )
+    .forEach((el) => (el.disabled = locked));
   if (routeChanged) {
-    currentRoute = route;
-    state.route = route;
-    view.removeAttribute("data-rendered");
-    view.innerHTML = ROUTES[route]();
-    window.scrollTo(0, 0);
-    document.title = `${TITLES[route]} — LUMA Hub`;
-    updateNav();
-    requestAnimationFrame(() => view.setAttribute("data-rendered", "1"));
+    scrollTo(0, 0);
+    if (previousRoute !== undefined) view.focus({ preventScroll: true });
   } else {
-    // Mise à jour in-place (favoris/récents) : on conserve la position.
-    const scrollY = window.scrollY;
-    view.innerHTML = ROUTES[route]();
-    view.setAttribute("data-rendered", "1");
-    window.scrollTo({ top: scrollY });
-    updateNav();
+    scrollTo(0, y);
+    if (focus) {
+      const target = [...view.querySelectorAll("button,input,select,a")].find(
+        (el) =>
+          focus.id
+            ? el.id === focus.id
+            : focus.name
+              ? el.name === focus.name && el.value === focus.value
+              : Object.keys(focus.dataset).length &&
+                Object.entries(focus.dataset).every(
+                  ([key, value]) => el.dataset[key] === value,
+                ),
+      );
+      target?.focus({ preventScroll: true });
+    }
   }
+  previousRoute = route;
 }
-
-// --------------------------------------------------------------- Compte
-
-function fillAccountUi() {
-  const user = state.session?.user;
-  const name = user?.display_name || user?.username || "Compte";
-  const initial = (name || "·").trim().charAt(0).toUpperCase() || "·";
-
-  const topbarName = document.getElementById("topbarName");
-  const menuName = document.getElementById("menuName");
-  const menuEmail = document.getElementById("menuEmail");
-  if (topbarName) topbarName.textContent = name;
-  if (menuName) menuName.textContent = name;
-  if (menuEmail) menuEmail.textContent = user?.email || "";
-  for (const avatarId of ["topbarAvatar", "menuAvatar"]) {
-    const el = document.getElementById(avatarId);
-    if (el) el.textContent = initial;
-  }
-
-  const accountLink = document.getElementById("openKyrosAccount");
-  if (accountLink) accountLink.href = `${kyrosUrl()}/account`;
+function fillAccount() {
+  const user = state.session.user,
+    name = user.display_name || user.username || "Compte";
+  for (const id of ["topbarName", "menuName"])
+    document.getElementById(id).textContent = name;
+  document.getElementById("menuEmail").textContent = user.email || "";
+  document.getElementById("topbarAvatar").textContent = name
+    .trim()
+    .slice(0, 1)
+    .toUpperCase();
+  for (const id of ["openKyrosAccount", "sidebarKyrosAccount"])
+    document.getElementById(id).href = `${kyrosUrl()}/account`;
 }
-
-function closeDropdowns() {
-  for (const dd of document.querySelectorAll(".dropdown.is-open")) {
-    dd.classList.remove("is-open");
-    dd.querySelector("[aria-haspopup]")?.setAttribute("aria-expanded", "false");
-  }
-}
-
-// --------------------------------------------------------------- Actions
-
-async function handleFavorite(button) {
-  const id = button.dataset.fav;
-  const willBeFavorite = !favoriteIds().has(id);
-
-  // Mise à jour optimiste du bouton (feedback immédiat).
-  button.classList.toggle("is-favorite", willBeFavorite);
-  button.setAttribute("aria-pressed", String(willBeFavorite));
-  button.setAttribute("aria-label", willBeFavorite ? "Retirer des favoris" : "Ajouter aux favoris");
-  button.disabled = true;
-
-  try {
-    await toggleFavorite(id);
-    toast(willBeFavorite ? "Ajouté aux favoris" : "Retiré des favoris");
-  } catch (error) {
-    button.classList.toggle("is-favorite", !willBeFavorite);
-    toast(error.message || "Impossible de mettre à jour vos favoris.", "error");
-  } finally {
-    button.disabled = false;
-  }
-}
-
 async function retryCatalog() {
-  rendering = true;
   try {
     await reloadCatalog();
     state.bootError = null;
-    toast("Catalogue rechargé");
-  } catch {
-    toast("Kyros reste injoignable.", "error");
-  } finally {
-    rendering = false;
     render();
+    toast("Catalogue rechargé");
+  } catch (error) {
+    toast(error.message || "Kyros est injoignable.", "error");
   }
 }
-
-async function handleLogout(event) {
-  const button = event.currentTarget;
-  button.disabled = true;
-  try {
-    await api.logout();
-  } finally {
-    location.href = "/";
-  }
-}
-
-// --------------------------------------------------------------- Écouteurs
-
 function bindEvents() {
-  // Délégation globale des actions de la vue.
-  document.addEventListener("click", (event) => {
+  document.addEventListener("click", async (event) => {
     const favorite = event.target.closest("[data-fav]");
     if (favorite) {
       event.preventDefault();
-      handleFavorite(favorite);
+      favorite.disabled = true;
+      try {
+        const added = await toggleFavorite(favorite.dataset.fav);
+        toast(added ? "Ajouté aux favoris" : "Retiré des favoris");
+      } catch (error) {
+        toast(error.message, "error");
+      } finally {
+        favorite.disabled = false;
+      }
       return;
     }
-
     const launch = event.target.closest("[data-launch]");
     if (launch) {
       const app = findApp(launch.dataset.launch);
       if (app) launchApp(app);
-      // L'anchor ouvre l'URL dans un nouvel onglet par défaut.
-      return;
+      else event.preventDefault();
     }
-
     const remove = event.target.closest("[data-remove-recent]");
-    if (remove) {
-      removeRecent(remove.dataset.removeRecent);
-      toast("Retiré des récents");
-      return;
-    }
-
-    if (event.target.closest("[data-clear-recents]")) {
-      clearRecents();
-      toast("Historique des récents effacé");
-      return;
-    }
-
-    if (event.target.closest("[data-retry]")) {
-      retryCatalog();
-      return;
-    }
-
-    // Dropdowns (notifications / compte).
-    const trigger = event.target.closest("#userChip, #notifButton");
-    if (trigger) {
-      const dropdown = trigger.closest(".dropdown");
-      const wasOpen = dropdown.classList.contains("is-open");
-      closeDropdowns();
-      if (!wasOpen) {
-        dropdown.classList.add("is-open");
-        trigger.setAttribute("aria-expanded", "true");
+    if (remove) removeRecent(remove.dataset.removeRecent);
+    if (event.target.closest("[data-clear-recents]")) clearRecents();
+    if (event.target.closest("[data-retry]")) retryCatalog();
+    if (event.target.closest("#accountMenu a"))
+      document.getElementById("accountMenu").hidePopover();
+  });
+  document
+    .getElementById("logoutButton")
+    .addEventListener("click", async (event) => {
+      const button = event.currentTarget;
+      button.disabled = true;
+      try {
+        if (hasUnsavedChanges()) {
+          await flushWorkspace();
+          if (hasUnsavedChanges())
+            throw new Error(
+              "Votre espace n’est pas enregistré. Réessayez ou exportez le brouillon avant de vous déconnecter.",
+            );
+        }
+        await api.logout();
+        await clearWorkspaceCache();
+        location.assign("/");
+      } catch (error) {
+        document.getElementById("logoutError").textContent = error.message;
+        button.disabled = false;
       }
-      return;
-    }
-    if (!event.target.closest(".dropdown-panel")) closeDropdowns();
+    });
+  document.addEventListener("hub:expired", async () => {
+    await clearWorkspaceCache();
+    location.assign(
+      `/auth/login?returnTo=${encodeURIComponent("/" + (location.hash || "#/"))}`,
+    );
   });
-
-  // Déconnexion.
-  document.getElementById("logoutButton")?.addEventListener("click", handleLogout);
-
-  // Menu mobile.
-  const burger = document.getElementById("burger");
-  const backdrop = document.getElementById("sidebarBackdrop");
-  const toggleNav = (open) => {
-    document.body.classList.toggle("nav-open", open);
-    burger?.setAttribute("aria-expanded", String(open));
-    if (backdrop) backdrop.hidden = !open;
-  };
-  burger?.addEventListener("click", () => toggleNav(!document.body.classList.contains("nav-open")));
-  backdrop?.addEventListener("click", () => toggleNav(false));
-  document.querySelector(".sidebar")?.addEventListener("click", (event) => {
-    if (event.target.closest(".nav-link, .brand")) toggleNav(false);
-  });
-
-  // Session expirée (401 sur n'importe quel appel API).
-  document.addEventListener("hub:expired", () => {
-    const returnTo = `/${location.hash || "#/"}`;
-    location.href = `/auth/login?returnTo=${encodeURIComponent(returnTo)}`;
-  });
-
-  // Images de logos cassées → initiales (listener capture, compatible CSP).
   document.addEventListener(
     "error",
     (event) => {
@@ -245,56 +179,48 @@ function bindEvents() {
         if (holder) holder.textContent = img.dataset.initials || "?";
       }
     },
-    true
+    true,
   );
-
-  // Fermer les dropdowns avec Échap.
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") closeDropdowns();
-  });
-}
-
-// --------------------------------------------------------------- Démarrage
-
-async function start() {
-  initSearch();
-  bindEvents();
-
-  try {
-    await boot();
-  } catch {
-    guestView?.classList.remove("hidden");
-    guestView && (guestView.querySelector(".lead").textContent =
-      "Le Hub ne peut pas contacter le serveur. Réessayez dans un instant.");
-    return;
-  }
-
-  fetch("/health")
-    .then((res) => res.json())
-    .then((data) => {
-      const el = document.getElementById("footerVersion");
-      if (el && data?.version) el.textContent = `v${data.version}`;
-    })
-    .catch(() => {});
-
-  if (!isAuthenticated()) {
-    guestView?.classList.remove("hidden");
-    return;
-  }
-
-  fillAccountUi();
-  appShell?.classList.remove("hidden");
-  render();
-
   window.addEventListener("hashchange", () => {
     closeSearch();
     render();
   });
-
-  subscribe((reason) => {
-    if (reason === "boot") return;
-    render();
+  let refreshedAt = Date.now();
+  window.addEventListener("focus", () => {
+    if (isAuthenticated() && Date.now() - refreshedAt > 60000) {
+      refreshedAt = Date.now();
+      retryCatalog();
+    }
   });
 }
-
-start();
+async function start() {
+  document.querySelectorAll("[data-icon]").forEach((el) => {
+    el.innerHTML = icon(el.dataset.icon);
+  });
+  initSearch();
+  bindEvents();
+  initWorkspace(render);
+  try {
+    await boot();
+  } catch {
+    document.querySelector("#guestView .lead").textContent =
+      "Le Hub est injoignable. Réessayez dans un instant.";
+  }
+  document.getElementById("bootStatus").classList.add("hidden");
+  if (!isAuthenticated()) {
+    document.getElementById("guestView").classList.remove("hidden");
+    return;
+  }
+  fillAccount();
+  document.getElementById("appShell").classList.remove("hidden");
+  render();
+  subscribe(() => render());
+  await loadWorkspace();
+  fetch("/health")
+    .then((r) => r.json())
+    .then((data) => {
+      document.getElementById("footerVersion").textContent = `v${data.version}`;
+    })
+    .catch(() => {});
+}
+await start();

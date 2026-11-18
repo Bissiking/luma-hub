@@ -8,6 +8,9 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import { config, validateConfig } from "./config.js";
 import * as sso from "./sso.js";
+import { openWorkspaceStore } from "./workspace/repository.js";
+import { workspaceRoutes } from "./workspace/routes.js";
+import { WorkspaceError } from "./public/js/workspace/model.js";
 import {
   createSession,
   getSession,
@@ -19,7 +22,7 @@ import {
   OAUTH_BINDING_COOKIE,
   isOAuthBrowserBinding,
   newOAuthBrowserBinding,
-  oauthBindingCookieOptions
+  oauthBindingCookieOptions,
 } from "./session.js";
 
 import pkg from "../package.json" with { type: "json" };
@@ -29,7 +32,8 @@ const version = readVersion();
 
 validateConfig();
 
-const app = express();
+export const app = express();
+export const workspaceStore = openWorkspaceStore(config.workspaceDbPath);
 app.disable("x-powered-by");
 app.use(
   helmet({
@@ -44,28 +48,41 @@ app.use(
         objectSrc: ["'none'"],
         baseUri: ["'self'"],
         formAction: ["'self'"],
-        frameAncestors: ["'none'"]
-      }
+        frameAncestors: ["'none'"],
+      },
     },
-    crossOriginEmbedderPolicy: false
-  })
+    crossOriginEmbedderPolicy: false,
+  }),
 );
 morgan.token("hub-route", (req) => req.route?.path || "[unmatched]");
 app.use(morgan(":method :hub-route :status :response-time ms"));
 app.use(cookieParser());
-app.use(express.json());
+app.use("/api", (req, res, next) => {
+  res.set("Cache-Control", "no-store");
+  next();
+});
 app.use((req, res, next) => {
-  if (!["GET", "HEAD", "OPTIONS"].includes(req.method) && req.get("origin") !== new URL(config.publicBaseUrl).origin) {
+  if (
+    !["GET", "HEAD", "OPTIONS"].includes(req.method) &&
+    req.get("origin") !== new URL(config.publicBaseUrl).origin
+  ) {
     return res.status(403).json({ error: "origin_mismatch" });
   }
   next();
 });
-app.use(
-  express.static(publicDir, {
-    index: false,
-    maxAge: config.isProduction ? "1h" : 0
-  })
-);
+app.use(express.json({ limit: "96kb", inflate: false }));
+// ESM sans bundle : un préfixe de version isole aussi les imports relatifs.
+const staticOptions = {
+  index: false,
+  maxAge: 0,
+  setHeaders(res, filename) {
+    if (/\.(?:js|css|html|webmanifest)$/.test(filename))
+      res.setHeader("Cache-Control", "no-store");
+  },
+};
+app.use(`/assets/${version}`, express.static(publicDir, staticOptions));
+app.use("/assets", (req, res) => res.status(404).end());
+app.use(express.static(publicDir, staticOptions));
 
 function readVersion() {
   try {
@@ -86,9 +103,8 @@ function escapeHtml(value) {
 function errorPage(res, status, title, message) {
   res.status(status).type("html").send(`<!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><title>${escapeHtml(title)}</title>
-<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0b0d15;color:#eef1f8;font:16px/1.5 system-ui,sans-serif}
-main{text-align:center;max-width:520px;padding:32px}h1{font-size:24px;margin:0 0 8px}p{color:#9aa3b8;margin:0 0 24px}a{display:inline-block;padding:12px 20px;border-radius:10px;background:#7a7bf0;color:#fff;text-decoration:none;font-weight:600}</style>
-</head><body><main><h1>${escapeHtml(title)}</h1><p>${escapeHtml(message)}</p><a href="/">Retour au Hub</a></main></body></html>`);
+<meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/styles/tokens.css"><link rel="stylesheet" href="/styles/ui.css"><link rel="stylesheet" href="/styles/home.css">
+</head><body><main class="boot-failure"><h1>${escapeHtml(title)}</h1><p>${escapeHtml(message)}</p><a class="btn btn-primary" href="/">Retour au Hub</a></main></body></html>`);
 }
 
 // ---------------------------------------------------------------------------
@@ -113,16 +129,26 @@ function refreshSession(token, session) {
       try {
         const pair = await sso.refreshAccessToken(session.refreshToken);
         const claims = await sso.verifyAccessToken(pair.accessToken);
+        if (claims.sub !== session.claims.sub)
+          throw new sso.SsoError(
+            "subject_mismatch",
+            "Identité de session invalide.",
+            401,
+          );
         touchSession(token, {
           accessToken: pair.accessToken,
           refreshToken: pair.refreshToken || session.refreshToken,
           accessExpiresAt: Date.now() + pair.expiresInSeconds * 1000,
-          claims
+          claims,
         });
       } catch (error) {
         if (sso.isTransientKyrosError(error)) throw error;
         destroySession(token);
-        throw new sso.SsoError("session_expired", "Session expirée, reconnectez-vous.", 401);
+        throw new sso.SsoError(
+          "session_expired",
+          "Session expirée, reconnectez-vous.",
+          401,
+        );
       } finally {
         session.refreshPromise = null;
       }
@@ -135,11 +161,20 @@ async function ensureFreshTokens(token, session) {
   if (session.accessExpiresAt - Date.now() > 60_000) return session;
   if (!session.refreshToken) {
     destroySession(token);
-    throw new sso.SsoError("session_expired", "Session expirée, reconnectez-vous.", 401);
+    throw new sso.SsoError(
+      "session_expired",
+      "Session expirée, reconnectez-vous.",
+      401,
+    );
   }
   await refreshSession(token, session);
   const refreshed = getSession(token);
-  if (!refreshed) throw new sso.SsoError("session_expired", "Session expirée, reconnectez-vous.", 401);
+  if (!refreshed)
+    throw new sso.SsoError(
+      "session_expired",
+      "Session expirée, reconnectez-vous.",
+      401,
+    );
   return refreshed;
 }
 
@@ -151,28 +186,45 @@ async function kyrosCall(url, { method = "GET", body, accessToken }) {
       headers: {
         accept: "application/json",
         authorization: `Bearer ${accessToken}`,
-        ...(body === undefined ? {} : { "content-type": "application/json" })
+        ...(body === undefined ? {} : { "content-type": "application/json" }),
       },
       body: body === undefined ? undefined : JSON.stringify(body),
-      signal: AbortSignal.timeout(config.kyrosTimeoutMs)
+      signal: AbortSignal.timeout(config.kyrosTimeoutMs),
     });
   } catch (error) {
     if (error.name === "TimeoutError" || error.name === "AbortError") {
-      throw new sso.SsoError("kyros_timeout", "Kyros ne répond pas (délai dépassé).", 504);
+      throw new sso.SsoError(
+        "kyros_timeout",
+        "Kyros ne répond pas (délai dépassé).",
+        504,
+      );
     }
-    throw new sso.SsoError("kyros_unreachable", "Impossible de joindre Kyros.", 502);
+    throw new sso.SsoError(
+      "kyros_unreachable",
+      "Impossible de joindre Kyros.",
+      502,
+    );
   }
   return response;
 }
 
 // Proxy transparent : on conserve le statut et le corps Kyros (dont
 // 409 revision_conflict et les 400 de préférences) pour le client.
-async function proxyToKyros(req, res, url, { method = "GET", body } = {}) {
+async function proxyToKyros(
+  req,
+  res,
+  url,
+  { method = "GET", body, binary = false } = {},
+) {
   const entry = requestSession(req, res);
   if (!entry) return;
 
   const send = async (session) => {
-    const response = await kyrosCall(url, { method, body, accessToken: session.accessToken });
+    const response = await kyrosCall(url, {
+      method,
+      body,
+      accessToken: session.accessToken,
+    });
     if (response.status === 401 && session.refreshToken) {
       await refreshSession(entry.token, session);
       const retried = getSession(entry.token);
@@ -180,7 +232,11 @@ async function proxyToKyros(req, res, url, { method = "GET", body } = {}) {
         res.status(401).json({ error: "authentication_required" });
         return;
       }
-      const retry = await kyrosCall(url, { method, body, accessToken: retried.accessToken });
+      const retry = await kyrosCall(url, {
+        method,
+        body,
+        accessToken: retried.accessToken,
+      });
       return forward(retry);
     }
     return forward(response);
@@ -191,6 +247,29 @@ async function proxyToKyros(req, res, url, { method = "GET", body } = {}) {
       destroySession(entry.token);
       res.status(401).json({ error: "authentication_required" });
       return;
+    }
+    if (binary && response.ok) {
+      const type = response.headers.get("content-type")?.split(";")[0];
+      if (!["image/png", "image/jpeg", "image/webp"].includes(type))
+        return res.status(502).json({ error: "invalid_logo" });
+      const reader = response.body.getReader();
+      const chunks = [];
+      let length = 0;
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          length += value.length;
+          if (length > 2 * 1024 * 1024) {
+            await reader.cancel();
+            return res.status(502).json({ error: "invalid_logo" });
+          }
+          chunks.push(Buffer.from(value));
+        }
+      } finally {
+        reader.releaseLock();
+      }
+      return res.type(type).send(Buffer.concat(chunks));
     }
     const payload = await response.json().catch(() => null);
     res.set("Cache-Control", "no-store");
@@ -208,8 +287,10 @@ async function proxyToKyros(req, res, url, { method = "GET", body } = {}) {
 }
 
 function handleApiError(res, error) {
-  if (error instanceof sso.SsoError) {
-    res.status(error.status).json({ error: error.code, message: error.message });
+  if (error instanceof sso.SsoError || error instanceof WorkspaceError) {
+    res
+      .status(error.status)
+      .json({ error: error.code, message: error.message });
     return;
   }
   console.error("[hub] erreur inattendue", error);
@@ -226,23 +307,30 @@ app.get("/health", (req, res) => {
 
 app.get("/auth/login", async (req, res) => {
   try {
-    const returnTo = typeof req.query.returnTo === "string" ? req.query.returnTo : "/";
+    const returnTo =
+      typeof req.query.returnTo === "string" ? req.query.returnTo : "/";
     const { codeVerifier, codeChallenge } = sso.createPkcePair();
     const existingBinding = req.cookies?.[OAUTH_BINDING_COOKIE];
-    const browserBinding = isOAuthBrowserBinding(existingBinding) ? existingBinding : newOAuthBrowserBinding();
-    res.cookie(OAUTH_BINDING_COOKIE, browserBinding, oauthBindingCookieOptions());
+    const browserBinding = isOAuthBrowserBinding(existingBinding)
+      ? existingBinding
+      : newOAuthBrowserBinding();
+    res.cookie(
+      OAUTH_BINDING_COOKIE,
+      browserBinding,
+      oauthBindingCookieOptions(),
+    );
     const state = createOAuthTransaction({
       browserBinding,
       returnTo,
       codeVerifier,
-      scope: config.kyrosRequestedScope
+      scope: config.kyrosRequestedScope,
     });
 
     const par = await sso.createPushedAuthorizationRequest({
       redirectUri: `${config.publicBaseUrl}/auth/callback`,
       scope: config.kyrosRequestedScope,
       state,
-      codeChallenge
+      codeChallenge,
     });
     res.redirect(sso.buildAuthorizeUrl(par.requestUri));
   } catch (error) {
@@ -258,27 +346,56 @@ app.get("/auth/login", async (req, res) => {
 app.get("/auth/callback", async (req, res) => {
   const params = new URL(req.originalUrl, config.publicBaseUrl).searchParams;
   const keys = ["state", "iss", "code", "error", "error_description"];
-  const code = params.get("code"), error = params.get("error"), state = params.get("state");
-  if (keys.some((key) => params.getAll(key).length > 1) || !state || Boolean(code) === Boolean(error)) {
-    return errorPage(res, 400, "Connexion refusée", "Réponse d’autorisation invalide. Réessayez.");
+  const code = params.get("code"),
+    error = params.get("error"),
+    state = params.get("state");
+  if (
+    keys.some((key) => params.getAll(key).length > 1) ||
+    !state ||
+    Boolean(code) === Boolean(error)
+  ) {
+    return errorPage(
+      res,
+      400,
+      "Connexion refusée",
+      "Réponse d’autorisation invalide. Réessayez.",
+    );
   }
   // Check the issuer for both success and error before consuming the browser transaction.
   if (params.get("iss") !== config.kyrosIssuer) {
-    return errorPage(res, 400, "Connexion refusée", "Issuer inattendu (confusion de serveur possible).");
+    return errorPage(
+      res,
+      400,
+      "Connexion refusée",
+      "Issuer inattendu (confusion de serveur possible).",
+    );
   }
-  const transaction = consumeOAuthTransaction(state, req.cookies?.[OAUTH_BINDING_COOKIE]);
+  const transaction = consumeOAuthTransaction(
+    state,
+    req.cookies?.[OAUTH_BINDING_COOKIE],
+  );
   if (!transaction) {
-    return errorPage(res, 400, "Connexion refusée", "Transaction invalide ou expirée. Réessayez.");
+    return errorPage(
+      res,
+      400,
+      "Connexion refusée",
+      "Transaction invalide ou expirée. Réessayez.",
+    );
   }
   if (error) {
-    return errorPage(res, 400, "Connexion refusée", String(params.get("error_description") || error).slice(0, 500));
+    return errorPage(
+      res,
+      400,
+      "Connexion refusée",
+      String(params.get("error_description") || error).slice(0, 500),
+    );
   }
 
   try {
     const pair = await sso.exchangeAuthorizationCode({
       code,
       codeVerifier: transaction.codeVerifier,
-      redirectUri: transaction.redirectUri
+      redirectUri: transaction.redirectUri,
     });
     const claims = await sso.verifyAccessToken(pair.accessToken);
 
@@ -287,13 +404,18 @@ app.get("/auth/callback", async (req, res) => {
       refreshToken: pair.refreshToken,
       accessExpiresAt: Date.now() + pair.expiresInSeconds * 1000,
       claims,
-      authTime: claims.auth_time ? claims.auth_time * 1000 : Date.now()
+      authTime: claims.auth_time ? claims.auth_time * 1000 : Date.now(),
     });
     res.cookie(config.cookieName, token, sessionCookieOptions());
     res.redirect(transaction.returnTo);
   } catch (error) {
     if (error instanceof sso.SsoError) {
-      errorPage(res, error.status === 401 ? 400 : error.status, "Connexion refusée", error.message);
+      errorPage(
+        res,
+        error.status === 401 ? 400 : error.status,
+        "Connexion refusée",
+        error.message,
+      );
       return;
     }
     console.error("[hub] /auth/callback", error);
@@ -308,7 +430,10 @@ app.post("/auth/logout", async (req, res) => {
     await sso.revokeRefreshToken(session.refreshToken);
   }
   destroySession(token);
-  res.clearCookie(config.cookieName, { ...sessionCookieOptions(), maxAge: undefined });
+  res.clearCookie(config.cookieName, {
+    ...sessionCookieOptions(),
+    maxAge: undefined,
+  });
   res.json({ ok: true });
 });
 
@@ -316,15 +441,28 @@ app.post("/auth/logout", async (req, res) => {
 // API Hub (aucun secret côté navigateur)
 // ---------------------------------------------------------------------------
 
-app.get("/api/session", (req, res) => {
+app.get("/api/session", async (req, res) => {
   res.set("Cache-Control", "no-store");
   const token = req.cookies?.[config.cookieName];
-  const session = getSession(token);
+  let session = getSession(token);
   const links = { kyros: config.kyrosBaseUrl };
 
   if (!session) {
     res.json({ authenticated: false, user: null, authTime: null, links });
     return;
+  }
+
+  try {
+    session = await ensureFreshTokens(token, session);
+  } catch (error) {
+    if (error.status === 401)
+      return res.json({
+        authenticated: false,
+        user: null,
+        authTime: null,
+        links,
+      });
+    return handleApiError(res, error);
   }
 
   const claims = session.claims || {};
@@ -336,30 +474,113 @@ app.get("/api/session", (req, res) => {
       display_name: claims.display_name || claims.username || null,
       email: claims.email || null,
       avatar_url: claims.picture || claims.avatar_url || null,
-      roles: claims.role ? [claims.role] : []
+      roles: claims.role ? [claims.role] : [],
     },
     authTime: session.authTime || null,
-    links
+    links,
   });
 });
 
 app.get("/api/me", (req, res) => proxyToKyros(req, res, config.kyrosMeUrl));
-app.get("/api/context", (req, res) => proxyToKyros(req, res, config.kyrosContextUrl));
-app.get("/api/catalog", (req, res) => proxyToKyros(req, res, config.kyrosCatalogUrl));
-app.get("/api/preferences", (req, res) => proxyToKyros(req, res, config.kyrosPreferencesUrl));
-app.patch("/api/preferences", (req, res) =>
-  proxyToKyros(req, res, config.kyrosPreferencesUrl, { method: "PATCH", body: req.body })
+app.get("/api/context", (req, res) =>
+  proxyToKyros(req, res, config.kyrosContextUrl),
 );
+app.get("/api/catalog", (req, res) =>
+  proxyToKyros(req, res, config.kyrosCatalogUrl),
+);
+app.get("/api/preferences", (req, res) =>
+  proxyToKyros(req, res, config.kyrosPreferencesUrl),
+);
+app.patch("/api/preferences", (req, res) =>
+  proxyToKyros(req, res, config.kyrosPreferencesUrl, {
+    method: "PATCH",
+    body: req.body,
+  }),
+);
+
+app.get("/api/apps/:id/logo", (req, res) => {
+  if (!/^[a-zA-Z0-9_-]{1,128}$/.test(req.params.id))
+    return res.status(400).json({ error: "invalid_app" });
+  return proxyToKyros(
+    req,
+    res,
+    `${config.kyrosBaseUrl}/api/hub/v1/apps/${encodeURIComponent(req.params.id)}/logo`,
+    { binary: true },
+  );
+});
+
+app.use(
+  "/api",
+  workspaceRoutes({
+    store: workspaceStore,
+    authenticate: async (req, res) => {
+      const entry = requestSession(req, res);
+      if (!entry) return null;
+      let session = await ensureFreshTokens(entry.token, entry.session);
+      let response = await kyrosCall(config.kyrosMeUrl, {
+        accessToken: session.accessToken,
+      });
+      if (response.status === 401 && session.refreshToken) {
+        await refreshSession(entry.token, session);
+        session = getSession(entry.token);
+        if (!session)
+          throw new sso.SsoError("session_expired", "Session expirée.", 401);
+        response = await kyrosCall(config.kyrosMeUrl, {
+          accessToken: session.accessToken,
+        });
+      }
+      if (!response.ok) {
+        if (response.status === 401) destroySession(entry.token);
+        throw new sso.SsoError(
+          "identity_unavailable",
+          "Votre identité Kyros ne peut pas être vérifiée. Réessayez.",
+          response.status >= 500 ? 503 : response.status,
+        );
+      }
+      const identity = await response.json();
+      if (identity?.id !== session.claims.sub) {
+        destroySession(entry.token);
+        throw new sso.SsoError(
+          "identity_mismatch",
+          "Identité Kyros incohérente.",
+          401,
+        );
+      }
+      return session.claims.sub;
+    },
+  }),
+);
+
+app.use((error, req, res, next) => {
+  if (res.headersSent) return next(error);
+  if (error.type === "entity.too.large")
+    return res.status(413).json({ error: "payload_too_large" });
+  if (error.type === "entity.parse.failed" || error.status === 415)
+    return res.status(error.status || 400).json({ error: "invalid_json" });
+  handleApiError(res, error);
+});
 
 app.use("/api", (req, res) => res.status(404).json({ error: "not_found" }));
 app.use("/auth", (req, res) => res.status(404).json({ error: "not_found" }));
 
 // SPA : toute route inconnue renvoie l'entrée du Hub.
 app.get("*", (req, res) => {
-  res.sendFile(path.join(publicDir, "index.html"));
+  const prefix = `/assets/${version}`;
+  const html = fs
+    .readFileSync(path.join(publicDir, "index.html"), "utf8")
+    .replaceAll("__HUB_ASSET_PREFIX__", prefix)
+    .replaceAll('href="/styles/', `href="${prefix}/styles/`)
+    .replace('src="/boot.js"', `src="${prefix}/boot.js"`);
+  res.set("Cache-Control", "no-store").type("html").send(html);
 });
 
-app.listen(config.port, () => {
-  console.log(`LUMA Hub v${version} → http://localhost:${config.port}`);
-  console.log(`Kyros ${config.kyrosBaseUrl} · SSO ${config.kyrosSsoVersion} · audience ${config.kyrosResourceAudience}`);
-});
+if (
+  process.argv[1] &&
+  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+)
+  app.listen(config.port, () => {
+    console.log(`LUMA Hub v${version} → http://localhost:${config.port}`);
+    console.log(
+      `Kyros ${config.kyrosBaseUrl} · SSO ${config.kyrosSsoVersion} · audience ${config.kyrosResourceAudience}`,
+    );
+  });

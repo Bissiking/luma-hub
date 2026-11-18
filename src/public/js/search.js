@@ -1,13 +1,51 @@
 // search.js — recherche globale ⌘K : pages + applications du catalogue
 
 import { visibleApps } from "./state.js";
-import { icon, escapeHtml, categoryLabel, categoryIcon, launchApp } from "./ui.js";
+import {
+  icon,
+  escapeHtml,
+  categoryLabel,
+  categoryIcon,
+  launchApp,
+  safeUrl,
+} from "./ui.js";
 
 const PAGES = [
-  { route: "accueil", label: "Accueil", hint: "Page · votre tableau de bord", icon: "home", keywords: "accueil home dashboard tableau" },
-  { route: "applications", label: "Applications", hint: "Page · catalogue complet", icon: "grid", keywords: "applications catalogue apps services" },
-  { route: "favoris", label: "Favoris", hint: "Page · vos applications favorites", icon: "star", keywords: "favoris star préférées" },
-  { route: "recents", label: "Récents", hint: "Page · derniers accès", icon: "clock", keywords: "récents historique derniers" }
+  {
+    route: "personnaliser",
+    label: "Personnaliser",
+    hint: "Compositions et widgets",
+    icon: "settings",
+    keywords: "reglages paramètres widgets personnaliser",
+  },
+  {
+    route: "accueil",
+    label: "Accueil",
+    hint: "Page · votre tableau de bord",
+    icon: "home",
+    keywords: "accueil home dashboard tableau",
+  },
+  {
+    route: "applications",
+    label: "Applications",
+    hint: "Page · catalogue complet",
+    icon: "grid",
+    keywords: "applications catalogue apps services",
+  },
+  {
+    route: "favoris",
+    label: "Favoris",
+    hint: "Page · vos applications favorites",
+    icon: "star",
+    keywords: "favoris star préférées",
+  },
+  {
+    route: "recents",
+    label: "Récents",
+    hint: "Page · derniers accès",
+    icon: "clock",
+    keywords: "récents historique derniers",
+  },
 ];
 
 let overlay;
@@ -36,7 +74,7 @@ function buildResults(query) {
   if (q) {
     for (const app of visibleApps()) {
       const haystack = normalize(
-        `${app.name} ${app.description || ""} ${categoryLabel(app.category)}`
+        `${app.name} ${app.description || ""} ${categoryLabel(app.category)}`,
       );
       if (haystack.includes(q)) {
         items.push({ type: "app", app });
@@ -52,9 +90,12 @@ function buildResults(query) {
 }
 
 function renderResults() {
+  input.removeAttribute("aria-activedescendant");
+  if (currentItems[activeIndex])
+    input.setAttribute("aria-activedescendant", `search-option-${activeIndex}`);
   if (!currentItems.length) {
     results.innerHTML = `<li class="search-empty">Aucun résultat pour « ${escapeHtml(
-      input.value.trim()
+      input.value.trim(),
     )} »</li>`;
     return;
   }
@@ -63,7 +104,7 @@ function renderResults() {
     .map((item, index) => {
       const active = index === activeIndex ? " is-active" : "";
       if (item.type === "page") {
-        return `<li class="search-result${active}" data-index="${index}" role="option" aria-selected="${
+        return `<li class="search-result${active}" data-index="${index}" id="search-option-${index}" role="option" aria-selected="${
           index === activeIndex
         }">
           ${icon(item.icon, "icon-result")}
@@ -75,7 +116,7 @@ function renderResults() {
         </li>`;
       }
       const app = item.app;
-      return `<li class="search-result${active}" data-index="${index}" role="option" aria-selected="${
+      return `<li class="search-result${active}" data-index="${index}" id="search-option-${index}" role="option" aria-selected="${
         index === activeIndex
       }">
         ${icon(categoryIcon(app.category), "icon-result")}
@@ -97,7 +138,7 @@ function refresh() {
 
 export function openSearch() {
   if (!overlay) return;
-  overlay.classList.remove("hidden");
+  if (!overlay.open) overlay.showModal();
   activeIndex = 0;
   input.value = "";
   refresh();
@@ -106,11 +147,11 @@ export function openSearch() {
 
 export function closeSearch() {
   if (!overlay) return;
-  overlay.classList.add("hidden");
+  if (overlay.open) overlay.close();
 }
 
 export function isSearchOpen() {
-  return overlay ? !overlay.classList.contains("hidden") : false;
+  return overlay ? overlay.open : false;
 }
 
 function activate(index) {
@@ -123,7 +164,8 @@ function activate(index) {
     return;
   }
   launchApp(item.app);
-  if (item.app.url) window.open(item.app.url, "_blank", "noopener");
+  const url = safeUrl(item.app.url);
+  if (url) window.open(url, "_blank", "noopener");
 }
 
 export function initSearch() {
@@ -132,8 +174,15 @@ export function initSearch() {
   results = document.getElementById("searchResults");
   if (!overlay || !input || !results) return;
 
-  document.getElementById("searchTrigger")?.addEventListener("click", openSearch);
-  document.getElementById("searchBackdrop")?.addEventListener("click", closeSearch);
+  document
+    .getElementById("searchTrigger")
+    ?.addEventListener("click", openSearch);
+  document
+    .getElementById("searchClose")
+    ?.addEventListener("click", closeSearch);
+  overlay.addEventListener("click", (event) => {
+    if (event.target === overlay) closeSearch();
+  });
 
   input.addEventListener("input", () => {
     activeIndex = 0;
@@ -161,7 +210,8 @@ export function initSearch() {
   });
 
   document.addEventListener("keydown", (event) => {
-    const shortcut = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k";
+    const shortcut =
+      (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k";
     if (shortcut) {
       event.preventDefault();
       isSearchOpen() ? closeSearch() : openSearch();
