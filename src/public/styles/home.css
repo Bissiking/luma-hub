@@ -1326,20 +1326,6 @@
   color: var(--success);
   width: 17px;
 }
-.connection-steps {
-  padding-left: 20px;
-  margin: 20px 0;
-  font-size: 13px;
-  max-width: 74ch;
-}
-.connection-steps li {
-  padding-bottom: 10px;
-}
-.connection-steps code,
-.drivio-note code {
-  overflow-wrap: anywhere;
-  font-size: 12px;
-}
 .widget-drivio .widget-body,
 .widget-drivio-vehicles .widget-body {
   overflow-wrap: anywhere;
