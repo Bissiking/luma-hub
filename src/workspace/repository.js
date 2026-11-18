@@ -24,7 +24,7 @@ export function openWorkspaceStore(filename) {
     const version =
       db.prepare("SELECT max(version) AS version FROM schema_migrations").get()
         .version || 0;
-    if (version > 1)
+    if (version > 2)
       throw new Error(
         "Schéma SQLite plus récent que ce runtime ; restauration du runtime requise.",
       );
@@ -37,6 +37,18 @@ export function openWorkspaceStore(filename) {
       );
       db.prepare("INSERT INTO schema_migrations VALUES (?, ?)").run(
         1,
+        new Date().toISOString(),
+      );
+    }
+    if (version < 2) {
+      db.exec(
+        fs.readFileSync(
+          new URL("./migrations/002-connector-secrets.sql", import.meta.url),
+          "utf8",
+        ),
+      );
+      db.prepare("INSERT INTO schema_migrations VALUES (?, ?)").run(
+        2,
         new Date().toISOString(),
       );
     }
@@ -62,6 +74,33 @@ export function openWorkspaceStore(filename) {
       );
   }
   return {
+    hasConnections() {
+      return Boolean(
+        db.prepare("SELECT 1 FROM connector_secrets LIMIT 1").get(),
+      );
+    },
+    connection(userId) {
+      identity(userId, "personal");
+      return (
+        db
+          .prepare(
+            "SELECT sealed_token AS sealedToken, revision, connected_at AS connectedAt FROM connector_secrets WHERE user_id=? AND provider=?",
+          )
+          .get(userId, "drivio") || null
+      );
+    },
+    saveConnection(userId, { sealedToken, revision, connectedAt }) {
+      identity(userId, "personal");
+      db.prepare(
+        "INSERT INTO connector_secrets VALUES (?, ?, ?, ?, ?) ON CONFLICT(user_id, provider) DO UPDATE SET sealed_token=excluded.sealed_token, revision=excluded.revision, connected_at=excluded.connected_at",
+      ).run(userId, "drivio", sealedToken, revision, connectedAt);
+    },
+    removeConnection(userId) {
+      identity(userId, "personal");
+      db.prepare(
+        "DELETE FROM connector_secrets WHERE user_id=? AND provider=?",
+      ).run(userId, "drivio");
+    },
     read(userId, spaceId = "personal") {
       identity(userId, spaceId);
       const row = read.get(userId, spaceId);

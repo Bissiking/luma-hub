@@ -24,6 +24,13 @@ import {
   setLauncherQuery,
   launcherResults,
 } from "./view.js";
+import {
+  drivio,
+  loadDrivioVehicles,
+  refreshDrivio,
+  disconnectDrivio,
+  ensureDrivioWidgets,
+} from "./drivio-client.js";
 
 let dialog, popover;
 function showDialog(title, body, submitLabel = null) {
@@ -50,7 +57,7 @@ function showDialog(title, body, submitLabel = null) {
 export function showWidgetCatalog() {
   showDialog(
     "Ajouter un widget",
-    `<p class="muted">Les widgets natifs sont prêts à rejoindre votre espace.</p><div class="widget-catalog">${Object.entries(
+    `<p class="muted">Ajoutez des widgets natifs ou connectés à votre espace.</p><div class="widget-catalog">${Object.entries(
       WIDGETS,
     )
       .map(
@@ -59,18 +66,39 @@ export function showWidgetCatalog() {
       )
       .join(
         "",
-      )}</div><h3 class="dialog-subtitle">Connecteurs indisponibles</h3><ul class="connector-list">${CONNECTORS.map((c) => `<li><div><strong>${e(c.name)}</strong><p>${e(c.reason)}</p></div><span class="pill">Indisponible</span></li>`).join("")}</ul>`,
+      )}</div><h3 class="dialog-subtitle">Connecteurs indisponibles</h3><ul class="connector-list">${CONNECTORS.filter(
+      (c) => !c.available,
+    )
+      .map(
+        (c) =>
+          `<li><div><strong>${e(c.name)}</strong><p>${e(c.reason)}</p></div><span class="pill">Indisponible</span></li>`,
+      )
+      .join("")}</ul>`,
   );
 }
 function linkRow(link = { label: "", url: "" }) {
   return `<div class="link-editor"><label>Libellé<input name="link-label" maxlength="80" value="${e(link.label)}" placeholder="Mon lien"></label><label>Adresse<input name="link-url" type="url" maxlength="2048" value="${e(link.url)}" placeholder="https://…"></label><button class="icon-btn" type="button" data-remove-link aria-label="Retirer ce lien">${icon("trash")}</button></div>`;
 }
-function configureWidget(id) {
+async function configureWidget(id) {
   const widget = workspace.data.widgets.find((w) => w.id === id);
   if (!widget) return;
   const spec = WIDGETS[widget.type],
     item = layout().find((w) => w.id === id);
   let config = "";
+  if (widget.type === "drivio") {
+    if (drivio.vehicles.status === "idle") await loadDrivioVehicles();
+    config = `<label>Véhicule<select name="vehicleId"><option value="">Véhicule principal, sinon premier véhicule</option>${drivio.vehicles.items.map((v) => `<option value="${e(v.id)}" ${widget.config.vehicleId === v.id ? "selected" : ""}>${e(`${v.brand} ${v.model}`)}</option>`).join("")}${widget.config.vehicleId && !drivio.vehicles.items.some((v) => v.id === widget.config.vehicleId) ? `<option value="${e(widget.config.vehicleId)}" selected>Véhicule sélectionné précédemment</option>` : ""}</select></label>${drivio.vehicles.nextOffset !== null ? '<button class="btn" type="button" data-drivio-config-more>Charger d’autres véhicules</button>' : ""}<label>Informations affichées<select name="drivioView">${[
+      ["overview", "Vue d’ensemble"],
+      ["maintenance", "Entretiens et alertes"],
+      ["expenses", "Dépenses"],
+      ["fuel", "Carburant"],
+    ]
+      .map(
+        ([value, label]) =>
+          `<option value="${value}" ${widget.config.view === value ? "selected" : ""}>${label}</option>`,
+      )
+      .join("")}</select></label>`;
+  }
   if (widget.type === "clock")
     config = `<label>Fuseau horaire<input name="timezone" value="${e(widget.config.timezone)}" list="timezones" placeholder="Fuseau de l’appareil"><datalist id="timezones"><option>Europe/Paris</option><option>Europe/London</option><option>America/Montreal</option><option>America/New_York</option><option>Asia/Tokyo</option><option>UTC</option></datalist></label><label class="check-label"><input name="hour12" type="checkbox" ${widget.config.hour12 ? "checked" : ""}>Format 12 heures</label>`;
   if (["favorites", "recents"].includes(widget.type))
@@ -86,6 +114,11 @@ function configureWidget(id) {
     event.preventDefault();
     const values = new FormData(form);
     let config = { ...widget.config };
+    if (widget.type === "drivio")
+      config = {
+        vehicleId: values.get("vehicleId"),
+        view: values.get("drivioView"),
+      };
     if (widget.type === "clock")
       config = {
         timezone: values.get("timezone").trim(),
@@ -188,7 +221,7 @@ export function initWorkspace(render) {
       `Composition ${input.dataset.composition === "mobile" ? "mobile" : "desktop"} modifiée`,
     );
   });
-  document.addEventListener("click", (event) => {
+  document.addEventListener("click", async (event) => {
     const button = event.target.closest("button");
     if (!button) return;
     const d = button.dataset;
@@ -205,7 +238,7 @@ export function initWorkspace(render) {
         render();
       }
       if ("widgetMenu" in d) showWidgetMenu(button);
-      if ("configureWidget" in d) configureWidget(d.configureWidget);
+      if ("configureWidget" in d) await configureWidget(d.configureWidget);
       if ("duplicateWidget" in d) {
         duplicateWidget(d.duplicateWidget);
         popover.hidePopover();
@@ -222,7 +255,52 @@ export function initWorkspace(render) {
           .insertAdjacentHTML("beforeend", linkRow());
       if ("removeLink" in d) button.closest(".link-editor").remove();
       if ("move" in d) stepWidget(d.id, d.move === "up" ? -1 : 1);
-      if ("resize" in d) configureWidget(d.resize);
+      if ("resize" in d) await configureWidget(d.resize);
+      if ("addDrivioWidget" in d) {
+        addWidget("drivio");
+        location.hash = "#/";
+        toast("Suivi Drivio ajouté");
+      }
+      if ("drivioRefresh" in d) {
+        button.disabled = true;
+        try {
+          await refreshDrivio();
+          await ensureDrivioWidgets();
+        } finally {
+          button.disabled = false;
+        }
+      }
+      if ("drivioMore" in d) {
+        button.disabled = true;
+        try {
+          await loadDrivioVehicles({ more: true });
+          await ensureDrivioWidgets();
+        } finally {
+          button.disabled = false;
+        }
+      }
+      if ("drivioDisconnect" in d) {
+        button.disabled = true;
+        try {
+          await disconnectDrivio();
+          toast("Connexion Drivio retirée du Hub");
+        } finally {
+          button.disabled = false;
+        }
+      }
+      if ("drivioConfigMore" in d) {
+        const values = new FormData(dialog.querySelector("form"));
+        const select = dialog.querySelector("[name=vehicleId]");
+        const known = new Set(
+          [...select.options].map((option) => option.value),
+        );
+        await loadDrivioVehicles({ more: true });
+        for (const v of drivio.vehicles.items)
+          if (!known.has(v.id))
+            select.add(new Option(`${v.brand} ${v.model}`, v.id));
+        select.value = values.get("vehicleId");
+        button.hidden = drivio.vehicles.nextOffset === null;
+      }
       if ("calendar" in d || "calendarToday" in d) {
         const id = d.id || d.calendarToday;
         calendarOffsets.set(

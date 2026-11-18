@@ -6,6 +6,12 @@ Le nouveau stockage est créé à `HUB_DB_PATH`, par défaut `data/hub.sqlite`. 
 
 Une lecture retourne un document initial en mémoire, à révision zéro ; seule la première sauvegarde écrit une ligne. Les choix Kyros ne sont ni copiés dans SQLite ni réinitialisés. Aucun compte ou catalogue n’est modifié.
 
+## Ajout Drivio (alpha.3)
+
+La migration `002-connector-secrets.sql` ajoute une table séparée pour les accès Drivio chiffrés. Elle ne réécrit ni documents, ni dates, ni révisions. Le test de montée depuis 001 vérifie la conservation exacte après réouverture. Sauvegarder aussi le fichier de clé créé automatiquement au premier consentement (`<HUB_DB_PATH>.key`, ou `HUB_CONNECTOR_KEY_PATH`) ; sans cette clé, restaurer une base ne suffit pas à relire les accès. Une clé manquante n’est pas régénérée si des secrets existent déjà.
+
+Un runtime alpha.2 refuse le schéma 002 : pour revenir à cet état, restaurer une sauvegarde cohérente antérieure avec le runtime correspondant. Garder la base alpha.3 et sa clé à part pour la reprise ; ne pas supprimer manuellement les enregistrements de migration. Le détail Drivio est décrit dans [DRIVIO.md](DRIVIO.md).
+
 ## Préférences existantes
 
 - Favoris, épingles, masqués, ordre et affichage : lecture du contrat Kyros existant. Thème du Hub système conformément au choix de l’utilisateur, sans réécriture du thème Kyros.

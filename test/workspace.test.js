@@ -12,6 +12,60 @@ import {
 } from "../src/public/js/workspace/model.js";
 import { openWorkspaceStore } from "../src/workspace/repository.js";
 
+test("migration 001 vers 002 : document, révision et dates conservés après réouverture", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "luma-upgrade-")),
+    file = path.join(dir, "hub.sqlite");
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const previous = new Database(file),
+    data = createWorkspace(),
+    updatedAt = "2026-11-01T12:00:00.000Z";
+  data.compositions.mobile = "immersive";
+  previous.exec(
+    "CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL)",
+  );
+  previous
+    .prepare("INSERT INTO schema_migrations VALUES (?,?)")
+    .run(1, updatedAt);
+  previous.exec(
+    fs.readFileSync(
+      new URL(
+        "../src/workspace/migrations/001-workspaces.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
+  previous
+    .prepare("INSERT INTO workspaces VALUES (?,?,?,?,?)")
+    .run("owner", "personal", 7, JSON.stringify(data), updatedAt);
+  previous.close();
+  const store = openWorkspaceStore(file);
+  assert.deepEqual(store.read("owner"), {
+    revision: 7,
+    updatedAt,
+    workspace: data,
+  });
+  assert.equal(store.connection("owner"), null);
+  store.saveConnection("owner", {
+    sealedToken: "cipher-fixture",
+    revision: "connection-id",
+    connectedAt: updatedAt,
+  });
+  store.close();
+  const reopened = openWorkspaceStore(file);
+  try {
+    assert.equal(reopened.connection("owner").revision, "connection-id");
+    assert.equal(reopened.connection("other"), null);
+    assert.deepEqual(reopened.read("owner"), {
+      revision: 7,
+      updatedAt,
+      workspace: data,
+    });
+  } finally {
+    reopened.close();
+  }
+});
+
 test("les cinq compositions et deux formats possèdent des dispositions indépendantes", () => {
   const data = createWorkspace();
   assert.deepEqual(validateWorkspace(data), data);
@@ -118,7 +172,7 @@ test("SQLite persiste après réouverture, migre une seule fois et isole les com
   const raw = new Database(filename);
   assert.equal(
     raw.prepare("SELECT count(*) AS n FROM schema_migrations").get().n,
-    1,
+    2,
   );
   raw.close();
 });

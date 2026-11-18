@@ -60,5 +60,5 @@ Manifeste PWA préparatoire seulement : aucun service worker, cache de ressource
 - Sauvegarde cohérente via outil SQLite `.backup` ou arrêt du Hub ; ne pas copier seulement le fichier principal en ignorant WAL/SHM.
 - Les dispositions sont une grille avec positions relatives, pas un canvas de coordonnées libres.
 - Le calendrier natif ne contient aucun rendez-vous distant.
-- Les connecteurs métier sont des descripteurs désactivés. Aucune requête d’application, météo ou RSS n’est inventée.
+- Drivio est connecté par un consentement et un proxy serveur dédiés ; voir [DRIVIO.md](DRIVIO.md). Les autres connecteurs métier, météo et RSS restent des descripteurs désactivés.
 - Les JWT déjà émis suivent leur durée de validité et les contrôles Kyros ; ce Hub n’invente pas une introspection instantanée.

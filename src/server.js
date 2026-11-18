@@ -11,6 +11,8 @@ import * as sso from "./sso.js";
 import { openWorkspaceStore } from "./workspace/repository.js";
 import { workspaceRoutes } from "./workspace/routes.js";
 import { WorkspaceError } from "./public/js/workspace/model.js";
+import { createDrivioConnector } from "./connectors/drivio.js";
+import { createDrivioAuthorization } from "./connectors/drivio-authorization.js";
 import {
   createSession,
   getSession,
@@ -34,6 +36,17 @@ validateConfig();
 
 export const app = express();
 export const workspaceStore = openWorkspaceStore(config.workspaceDbPath);
+export const drivioConnector = createDrivioConnector({
+  store: workspaceStore,
+  baseUrl: config.drivioBaseUrl,
+  keyPath: config.connectorKeyPath,
+  isProduction: config.isProduction,
+});
+const drivioAuthorization = createDrivioAuthorization({
+  connector: drivioConnector,
+  getPublicBaseUrl: () => config.publicBaseUrl,
+  cookieName: config.cookieName,
+});
 app.disable("x-powered-by");
 app.use(
   helmet({
@@ -513,7 +526,20 @@ app.use(
   "/api",
   workspaceRoutes({
     store: workspaceStore,
+    drivio: drivioConnector,
+    authorization: drivioAuthorization,
     authenticate: async (req, res) => {
+      if (
+        req.method === "GET" &&
+        [
+          "/connectors/drivio/authorize",
+          "/connectors/drivio/callback",
+        ].includes(req.path) &&
+        !getSession(req.cookies[config.cookieName])
+      ) {
+        res.redirect(303, "/#/personnaliser?drivio=failed");
+        return null;
+      }
       const entry = requestSession(req, res);
       if (!entry) return null;
       let session = await ensureFreshTokens(entry.token, entry.session);

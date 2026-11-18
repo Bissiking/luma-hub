@@ -82,7 +82,8 @@ Transformer le portail LUMA existant en workspace personnel et entreprise, sans 
 - [x] Tests unitaires/HTTP/SQLite, Chrome synthétique et contrat réel Kyros sur PostgreSQL jetable.
 - [x] Reconnexion et ouverture du catalogue sur le client courant, confirmées par l’utilisateur après son alignement.
 - [ ] Sélection et isolation de contextes entreprise : contrat Kyros à définir.
-- [ ] Connecteurs métier et météo/RSS : contrats, permissions et fournisseurs à valider.
+- [x] Drivio : consentement avec choix des véhicules, révocation, garage et suivi en lecture seule (alpha.3).
+- [ ] Autres connecteurs métier et météo/RSS : contrats, permissions et fournisseurs à valider.
 - [ ] Sessions durables et exploitation/backup avant généralisation.
 - [ ] Recette physique/mobile, multi-navigateurs et assistance technique d’accessibilité.
 - [ ] Bêta, RC, validation stable et publication.

@@ -17,6 +17,7 @@ import { ROUTES, routeFromHash, renderNotFound } from "./js/views.js";
 import { initSearch, closeSearch } from "./js/search.js";
 import { toast, launchApp, icon } from "./js/ui.js";
 import { initWorkspace } from "./js/workspace/controller.js";
+import {initDrivio} from './js/workspace/drivio-client.js';
 import {
   loadWorkspace,
   workspace,
@@ -216,6 +217,7 @@ async function start() {
   render();
   subscribe(() => render());
   await loadWorkspace();
+  initDrivio(render);
   fetch("/health")
     .then((r) => r.json())
     .then((data) => {

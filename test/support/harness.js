@@ -6,7 +6,7 @@ import os from "node:os";
 import path from "node:path";
 import { generateKeyPair, exportJWK, SignJWT } from "jose";
 
-export async function createHarness() {
+export async function createHarness({ drivioBaseUrl = "" } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "luma-http-validation-"));
   const provider = express();
   provider.use(express.json());
@@ -216,9 +216,12 @@ export async function createHarness() {
     KYROS_JWKS_URL: `${kyrosBase}/sso/v4/jwks`,
     KYROS_TIMEOUT_SECONDS: "1",
     HUB_DB_PATH: path.join(dir, "hub.sqlite"),
+    HUB_CONNECTOR_KEY_PATH: path.join(dir, "connectors.key"),
+    DRIVIO_BASE_URL: drivioBaseUrl,
     DOTENV_CONFIG_PATH: path.join(dir, "absent.env"),
   });
-  const { app, workspaceStore } = await import("../../src/server.js");
+  const { app, workspaceStore, drivioConnector } =
+    await import("../../src/server.js");
   const { config } = await import("../../src/config.js");
   const { createSession } = await import("../../src/session.js");
   const server = app.listen(0, "127.0.0.1");
@@ -231,6 +234,8 @@ export async function createHarness() {
     controls,
     apps,
     store: workspaceStore,
+    drivio: drivioConnector,
+    keyPath: path.join(dir, "connectors.key"),
     async sessionFor(id, options = {}) {
       const tokens = await pair(id);
       const { decodeJwt } = await import("jose");

@@ -270,3 +270,5 @@ Les transitions de couleur et de fond sont brèves (0,15s). L'ouverture d'un dia
 - **Don't** transformer les exemples synthétiques des captures en données métier du produit.
 
 Non canonisé : les valeurs de placement propres à une capture, les données de recette, les erreurs de contenu présentes dans les maquettes générées et les scores de conformité inexistants ne sont pas des règles du système.
+
+**Extension Drivio.** Les réglages de connexion et widgets en lecture seule réutilisent les surfaces, commandes et thèmes système du Hub ; le consentement autonome conserve l’identité Drivio. Le parcours, la configuration par instance et les preuves locales synthétiques sont décrits dans [.impeccable/surfaces/drivio.md](.impeccable/surfaces/drivio.md). Cette extension n’ajoute aucun jeton ni primitive au système.

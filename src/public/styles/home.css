@@ -1135,3 +1135,234 @@
   min-width: 0;
   flex: 1;
 }
+/* Drivio : mêmes surfaces et commandes que les widgets natifs. */
+.drivio-message,
+.drivio-loading {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  padding: 8px 0;
+}
+.drivio-message p {
+  margin-bottom: 8px;
+}
+.drivio-vehicles li + li {
+  border-top: 1px solid var(--line);
+}
+.drivio-vehicles a {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+  min-height: 68px;
+  padding: 10px 0;
+}
+.drivio-vehicles strong,
+.drivio-vehicles small {
+  display: block;
+}
+.drivio-vehicles strong {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.drivio-vehicles small {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.drivio-mileage {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.drivio-mileage .icon {
+  width: 14px;
+  color: var(--accent);
+}
+.drivio-vehicle-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 16px;
+}
+.drivio-vehicle-heading strong {
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+.drivio-vehicle-heading span {
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.drivio-section {
+  padding: 18px 0;
+  border-top: 1px solid var(--line);
+}
+.drivio-section h3 {
+  font-size: 13px;
+  margin-bottom: 12px;
+  color: var(--text-2);
+}
+.drivio-maintenance li {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 12px;
+  padding: 12px 0;
+}
+.drivio-maintenance li + li {
+  border-top: 1px solid var(--line);
+}
+.drivio-maintenance strong {
+  display: block;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.drivio-maintenance small {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 5px;
+}
+.drivio-maintenance li > span {
+  font-size: 12px;
+  white-space: nowrap;
+}
+.drivio-state {
+  color: var(--text-2);
+}
+.drivio-state.state-overdue {
+  color: var(--danger);
+}
+.drivio-state.state-soon {
+  color: var(--amber);
+}
+.drivio-note {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.drivio-amount,
+.drivio-consumption {
+  font-size: 24px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 8px;
+}
+.drivio-alerts {
+  margin-bottom: 18px;
+}
+.drivio-alerts li {
+  padding: 12px 0;
+}
+.drivio-alerts li + li {
+  border-top: 1px solid var(--line);
+}
+.drivio-alerts strong {
+  display: flex;
+  align-items: start;
+  gap: 7px;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.drivio-alerts .icon {
+  width: 17px;
+  color: var(--amber);
+}
+.drivio-alerts p {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-top: 6px;
+}
+.drivio-footer {
+  border-top: 1px solid var(--line);
+  margin-top: 12px;
+  padding-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.drivio-details {
+  font-size: 13px;
+  margin: 16px 0;
+}
+.drivio-details > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+}
+.drivio-details dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.drivio-settings > header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.drivio-settings > p {
+  font-size: 14px;
+  color: var(--muted);
+}
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0;
+  font-size: 13px;
+}
+.connection-status .icon {
+  color: var(--success);
+  width: 17px;
+}
+.connection-steps {
+  padding-left: 20px;
+  margin: 20px 0;
+  font-size: 13px;
+  max-width: 74ch;
+}
+.connection-steps li {
+  padding-bottom: 10px;
+}
+.connection-steps code,
+.drivio-note code {
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+.widget-drivio .widget-body,
+.widget-drivio-vehicles .widget-body {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 700px) {
+  .drivio-vehicles a {
+    flex-wrap: wrap;
+    gap: 5px;
+    min-height: 74px;
+  }
+  .drivio-mileage {
+    font-size: 12px;
+  }
+  .drivio-maintenance li {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .drivio-amount,
+  .drivio-consumption {
+    font-size: 22px;
+  }
+  .drivio-settings .settings-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

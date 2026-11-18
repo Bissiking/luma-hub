@@ -89,6 +89,28 @@ export const WIDGETS = Object.freeze({
     actions: ["open", "remove"],
     available: true,
   },
+  "drivio-vehicles": {
+    name: "Garage Drivio",
+    description: "Vos véhicules et leurs compteurs enregistrés.",
+    icon: "car",
+    source: "Drivio · API Hub v1, lecture seule",
+    sizes: [1, 2, 3],
+    permissions: ["widgets:read"],
+    refresh: "5 minutes, à la demande",
+    actions: ["configure", "refresh", "open"],
+    available: true,
+  },
+  drivio: {
+    name: "Suivi Drivio",
+    description: "Entretiens, alertes, dépenses et carburant d’un véhicule.",
+    icon: "car",
+    source: "Drivio · API Hub v1, lecture seule",
+    sizes: [1, 2, 3],
+    permissions: ["widgets:read"],
+    refresh: "5 minutes, à la demande",
+    actions: ["configure", "refresh", "open"],
+    available: true,
+  },
 });
 
 export const CONNECTORS = Object.freeze([
@@ -104,8 +126,9 @@ export const CONNECTORS = Object.freeze([
     id: "drivio",
     name: "Drivio",
     description: "Véhicules et entretiens",
-    available: false,
-    reason: "Contrat de lecture et autorisations du Hub à valider.",
+    available: true,
+    reason:
+      "API Hub v1 vérifiée ; jeton personnel en lecture seule, configuré côté serveur par compte.",
   },
   {
     id: "nino",
@@ -191,6 +214,7 @@ export function shortcutUrl(value) {
   }
 }
 export function defaultConfig(type) {
+  if (type === "drivio") return { vehicleId: "", view: "overview" };
   if (type === "clock") return { timezone: "", hour12: false };
   if (type === "shortcuts") return { links: [] };
   if (type === "favorites" || type === "recents")
@@ -201,6 +225,11 @@ export function validateConfig(type, value) {
   const fields = Object.keys(defaultConfig(type));
   object(value, fields);
   const config = { ...defaultConfig(type), ...value };
+  if (type === "drivio") {
+    text(config.vehicleId, 100);
+    if (!["overview", "maintenance", "expenses", "fuel"].includes(config.view))
+      invalid();
+  }
   if (type === "clock") {
     text(config.timezone, 100);
     if (typeof config.hour12 !== "boolean") invalid();

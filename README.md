@@ -4,7 +4,7 @@ Workspace LUMA connecté à **Kyros SSO v4**, en développement sur `1.x.x`. La 
 
 Cinq compositions partagent le même moteur : dashboard, lanceur minimaliste, immersive, modulaire et multi-espaces. Navigation mobile dédiée, thème système, choix de composition et dispositions séparés desktop/mobile. Six widgets natifs : horloge/date, calendrier du mois, favoris, raccourcis, recherche et récents. Ajout, configuration, duplication, déplacement, tailles et sauvegarde automatique sont disponibles.
 
-La composition multi-espaces n’active encore que l’espace personnel. Les connecteurs BrainDump, Drivio, Nino, Harmonix, météo et RSS restent explicitement désactivés jusqu’à validation de leurs contrats.
+La composition multi-espaces n’active encore que l’espace personnel. Drivio propose deux widgets en lecture seule : garage et suivi par véhicule. Les connecteurs BrainDump, Nino, Harmonix, météo et RSS restent désactivés jusqu’à validation de leurs contrats.
 
 ## Démarrage
 
@@ -31,9 +31,15 @@ Dans Kyros → Clients SSO & OIDC, le client dédié au Hub doit avoir :
 
 Le `.env` doit demander la même audience et les mêmes scopes. Une audience générée comme `kyros:sso:hub` est refusée par l’API Hub. Après modification, redémarrer le Hub et se reconnecter pour renouveler les claims. Le détail de la vérification locale se trouve dans [les contrats Kyros](docs/KYROS_CONTRACTS.md).
 
+## Connecter son garage Drivio
+
+Dans **Personnaliser → Votre garage Drivio → Connecter Drivio**, choisir les véhicules dans Drivio puis cliquer **Autoriser LUMA Hub**. Le retour au Hub est automatique ; **Ajouter un suivi** ajoute le widget. Chaque instance peut afficher un véhicule et une vue différents. Aucune commande ni copie de jeton n’est demandée à l’utilisateur. L’accès se retire depuis **Drivio → Paramètres → Hub LUMA** ou depuis le Hub.
+
+Le même compte Kyros doit être utilisé dans les deux applications. La page de consentement Drivio est accessible par le bouton, sans entrée dans le menu. [Contrat et fonctionnement](docs/DRIVIO.md).
+
 ## Données et sécurité
 
-Kyros conserve identité, autorisations, catalogue et favoris existants. SQLite conserve uniquement compositions, instances de widgets et dispositions. `HUB_DB_PATH` vaut `./data/hub.sqlite` par défaut ; ce répertoire est ignoré par Git et doit être durable en exploitation. Une lecture initiale ne crée pas de préférence utilisateur en base. Les migrations sont versionnées et transactionnelles.
+Kyros conserve identité, autorisations, catalogue et favoris existants. SQLite conserve compositions, instances de widgets, dispositions et accès Drivio chiffrés par compte. La clé privée est créée automatiquement dans un fichier voisin de la base ; sauvegarder la base et cette clé ensemble, sans les publier. `HUB_DB_PATH` vaut `./data/hub.sqlite` par défaut ; ce répertoire est ignoré par Git et doit être durable en exploitation. Une lecture initiale ne crée pas de préférence utilisateur en base. Les migrations sont versionnées et transactionnelles.
 
 Les récents existants restent en localStorage par compte et sont filtrés par le catalogue courant. IndexedDB conserve seulement des brouillons de configuration, isolés par session et espace. Aucun jeton ni secret ne sort du serveur. Les erreurs réseau et conflits 409 ne remplacent pas silencieusement les données.
 
@@ -46,11 +52,14 @@ Les sessions restent en mémoire : un redémarrage déconnecte les utilisateurs.
 | `GET /api/session` | Session et identité publique |
 | `GET /api/me`, `GET /api/context` | Proxys identité et appartenances Kyros |
 | `GET /api/catalog` | Catalogue autorisé et préférences Kyros |
-| `GET|PATCH /api/preferences` | Favoris et préférences Kyros révisionnés |
+| `GET\|PATCH /api/preferences` | Favoris et préférences Kyros révisionnés |
 | `GET /api/apps/:id/logo` | Logo autorisé, proxy image borné |
-| `GET /api/widgets` | Registre natif et connecteurs désactivés |
+| `GET /api/widgets` | Registre natif, Drivio et connecteurs futurs |
+| `GET /api/connectors/drivio/authorize`, `GET /api/connectors/drivio/callback` | Connexion par consentement et PKCE |
+| `GET\|DELETE /api/connectors/drivio` | État et retrait de la connexion |
+| `GET /api/connectors/drivio/vehicles`, `GET /api/connectors/drivio/summary` | Proxy Drivio privé, borné et en lecture seule |
 | `GET /api/spaces` | Espaces réellement disponibles |
-| `GET|PUT /api/workspace/personal` | Document Hub et révision SQLite |
+| `GET\|PUT /api/workspace/personal` | Document Hub et révision SQLite |
 
 ## Validation
 
@@ -59,12 +68,13 @@ npm run check          # Syntaxe et cohérence des versions
 npm run build          # Graphe ESM, assets et manifeste ; sans transpilation
 npm test               # Tests unitaires, SQLite et HTTP isolés
 npm run test:browser    # Chrome local, Puppeteer, fournisseur Kyros synthétique
+npm run test:drivio     # Vrais Hub et Drivio voisins + SQLite jetable, Kyros simulé
 npm run test:kyros      # Vrai code Kyros voisin + PostgreSQL local jetable
 ```
 
 Pour Chrome, définir `CHROME_PATH` si l’exécutable n’est pas détecté dans le cache Puppeteer macOS. Le test réel utilise par défaut `../kyros`, configurable avec `KYROS_REPO`. Il exige les dépendances Kyros installées et le droit de créer/supprimer une base PostgreSQL locale de validation. Il ne modifie pas les comptes ou clients courants.
 
-Captures et rapport navigateur dans `.impeccable/review/` (ignoré). Rapport réel Kyros dans `test/artifacts/kyros-real-contract.json` (ignoré). Bilan durable : [validation alpha](docs/VALIDATION_ALPHA2.md).
+Captures et rapport navigateur dans `.impeccable/review/` (ignoré). Rapport réel Kyros dans `test/artifacts/kyros-real-contract.json` (ignoré). Bilans durables : [alpha.2](docs/VALIDATION_ALPHA2.md) et [connexion Drivio alpha.3](docs/DRIVIO.md).
 
 ## Documentation et livraison
 
