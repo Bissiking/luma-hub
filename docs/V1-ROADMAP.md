@@ -2,7 +2,7 @@
 
 # LUMA Hub V1 · feuille de route
 
-> Document de cadrage. Les fonctionnalités ci-dessous sont **prévues**, pas encore implémentées. Les API non vérifiées restent à spécifier.
+> Cadrage V1 conservé ci-dessous. Le suivi alpha en fin de document distingue les éléments livrés et les contrats encore ouverts.
 
 ## Objectif
 
@@ -68,3 +68,23 @@ Transformer le portail LUMA existant en workspace personnel et entreprise, sans 
 - Série `1.0.0-alpha.N` puis `beta.N`, `rc.N`, enfin `1.0.0` après validation.
 - La V1 stable ne dépend pas de la disponibilité de tous les connecteurs secondaires.
 - Protéger la branche `prod` et exiger des vérifications avant fusion.
+
+## Suivi vérifiable · alpha.2
+
+- [x] Audit du dépôt, des tests, des contrats Kyros et des préférences existantes.
+- [x] Architecture ESM/Express retenue et évaluation React/Vite/TypeScript documentée.
+- [x] Cinq compositions, thème système, navigation mobile dédiée.
+- [x] Préférences/dispositions desktop-mobile indépendantes et moteur partagé.
+- [x] SQLite versionné, révisions, transactions, isolation et repli documenté.
+- [x] Six widgets natifs, instances multiples, CRUD/configuration, ordre et tailles.
+- [x] Brouillons IndexedDB isolés et récupération explicite.
+- [x] Favoris Kyros et historique local préservés ; proxys de logos autorisés.
+- [x] Tests unitaires/HTTP/SQLite, Chrome synthétique et contrat réel Kyros sur PostgreSQL jetable.
+- [x] Reconnexion et ouverture du catalogue sur le client courant, confirmées par l’utilisateur après son alignement.
+- [ ] Sélection et isolation de contextes entreprise : contrat Kyros à définir.
+- [ ] Connecteurs métier et météo/RSS : contrats, permissions et fournisseurs à valider.
+- [ ] Sessions durables et exploitation/backup avant généralisation.
+- [ ] Recette physique/mobile, multi-navigateurs et assistance technique d’accessibilité.
+- [ ] Bêta, RC, validation stable et publication.
+
+Preuves et limites : [VALIDATION_ALPHA2.md](VALIDATION_ALPHA2.md). Les cases cochées décrivent la portée locale réalisée ; elles ne valent ni déploiement ni qualification de production.

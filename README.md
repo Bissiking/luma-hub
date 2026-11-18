@@ -1,83 +1,77 @@
 # LUMA Hub
 
-Portail principal de l'écosystème mhemery.fr, branché sur **Kyros** (SSO v4).
+Workspace LUMA connecté à **Kyros SSO v4**, en développement sur `1.x.x`. La version courante est définie uniquement dans `package.json`.
 
-## Rôle
+Cinq compositions partagent le même moteur : dashboard, lanceur minimaliste, immersive, modulaire et multi-espaces. Navigation mobile dédiée, thème système, choix de composition et dispositions séparés desktop/mobile. Six widgets natifs : horloge/date, calendrier du mois, favoris, raccourcis, recherche et récents. Ajout, configuration, duplication, déplacement, tailles et sauvegarde automatique sont disponibles.
 
-LUMA Hub gère l'expérience utilisateur : accueil, catalogue, favoris, récents et
-navigation. Kyros reste la source d'identité, d'authentification, des droits et
-des préférences.
-
-## Stack
-
-- Node.js 20+, Express, vanilla JS/CSS côté client (aucun build)
-- **SSO v4** : PAR + Authorization Code + PKCE S256, access token **RS256** vérifié via le JWKS
-- API Kyros : `/api/me`, `/api/apps/me` (contexte), `/api/hub/v1/catalog`, `/api/hub/v1/preferences`
-- Aucun secret Kyros exposé au navigateur
+La composition multi-espaces n’active encore que l’espace personnel. Les connecteurs BrainDump, Drivio, Nino, Harmonix, météo et RSS restent explicitement désactivés jusqu’à validation de leurs contrats.
 
 ## Démarrage
 
+Node.js 20+ pour le serveur ; recette exécutée sur Node 24. SQLite via `better-sqlite3` (module natif). Chrome/Puppeteer pour la recette navigateur.
+
 ```bash
-npm install
-cp .env.example .env   # renseigner KYROS_CLIENT_ID / KYROS_CLIENT_SECRET
+npm ci
+cp .env.example .env
+# Renseigner le client Kyros SSO v4.
 npm run dev
 ```
 
-Puis ouvrir `http://localhost:3000`. Kyros doit tourner (par défaut `http://localhost:3001`).
+Ouvrir `http://localhost:3000`, avec Kyros local sur `http://localhost:3001`. Ne pas utiliser `127.0.0.1:3000` à la place si le callback et PUBLIC_BASE_URL sont enregistrés pour `localhost`. Un autre service Docker peut occuper seulement l’adresse IPv4 de ce port.
 
-## Client Kyros SSO v4
-
-Dans **Kyros → Administration → Clients SSO & OIDC** :
+Dans Kyros → Clients SSO & OIDC, le client dédié au Hub doit avoir :
 
 | Champ | Valeur |
-|---|---|
-| Protocole | SSO v4 |
-| Mode d'intégration | `sso` |
-| Périmètre | `standard` |
-| Audience de ressource | **`kyros:hub`** |
-| Scopes | `profile email offline_access hub:read hub:preferences` |
-| Callbacks | `http://localhost:3000/auth/callback` et `https://mhemery.fr/auth/callback` |
+| --- | --- |
+| Protocole / mode | SSO v4 / `sso` |
+| Édition / périmètre | `standard` / `standard` |
+| Audience ressource | **`kyros:hub`** (exactement) |
+| Scopes autorisés | `profile email offline_access hub:read hub:preferences` |
+| Callback local | `http://localhost:3000/auth/callback` |
 
-Handshake attendu par Kyros : `kyros_sso_version=v4`,
-`kyros_edition=standard`, `kyros_application_scope=standard`.
+Le `.env` doit demander la même audience et les mêmes scopes. Une audience générée comme `kyros:sso:hub` est refusée par l’API Hub. Après modification, redémarrer le Hub et se reconnecter pour renouveler les claims. Le détail de la vérification locale se trouve dans [les contrats Kyros](docs/KYROS_CONTRACTS.md).
 
-> Sans `kyros:hub` et les scopes `hub:read` / `hub:preferences`, l'API Hub v1
-> renvoie 403 `invalid_audience` / `insufficient_scope`.
+## Données et sécurité
 
-## Flow d'authentification
+Kyros conserve identité, autorisations, catalogue et favoris existants. SQLite conserve uniquement compositions, instances de widgets et dispositions. `HUB_DB_PATH` vaut `./data/hub.sqlite` par défaut ; ce répertoire est ignoré par Git et doit être durable en exploitation. Une lecture initiale ne crée pas de préférence utilisateur en base. Les migrations sont versionnées et transactionnelles.
 
-```
-GET /auth/login        → transaction (state + code_verifier) → POST Kyros /par → redirect /authorize
-GET /auth/callback     → vérif state + iss → POST Kyros /token (+ PKCE) → vérif RS256 (JWKS) → session
-GET /api/*             → proxy Bearer vers Kyros (refresh rotatif automatique)
-POST /auth/logout      → POST Kyros /revoke puis destruction de la session
-```
+Les récents existants restent en localStorage par compte et sont filtrés par le catalogue courant. IndexedDB conserve seulement des brouillons de configuration, isolés par session et espace. Aucun jeton ni secret ne sort du serveur. Les erreurs réseau et conflits 409 ne remplacent pas silencieusement les données.
 
-## API interne (côté navigateur)
+Les sessions restent en mémoire : un redémarrage déconnecte les utilisateurs. Le manifeste prépare une évolution PWA ; aucun mode hors ligne complet ou push n’est livré.
+
+## API interne
 
 | Route | Rôle |
-|---|---|
-| `GET /api/session` | `{authenticated, user, authTime, links}` |
-| `GET /api/context` | contexte Personnel / Entreprise (`/api/apps/me`) |
-| `GET /api/catalog` | catalogue + préférences + révision (`/api/hub/v1/catalog`) |
-| `GET|PATCH /api/preferences` | favoris/épingles/masqués/ordre (révision atomique, 409 géré) |
+| --- | --- |
+| `GET /api/session` | Session et identité publique |
+| `GET /api/me`, `GET /api/context` | Proxys identité et appartenances Kyros |
+| `GET /api/catalog` | Catalogue autorisé et préférences Kyros |
+| `GET|PATCH /api/preferences` | Favoris et préférences Kyros révisionnés |
+| `GET /api/apps/:id/logo` | Logo autorisé, proxy image borné |
+| `GET /api/widgets` | Registre natif et connecteurs désactivés |
+| `GET /api/spaces` | Espaces réellement disponibles |
+| `GET|PUT /api/workspace/personal` | Document Hub et révision SQLite |
 
-Les récents (derniers accès) restent en `localStorage`, indexés par compte.
-Les favoris sont persistés côté Kyros (partagés entre appareils).
-
-## Commandes
+## Validation
 
 ```bash
-npm run dev     # développement (nodemon)
-npm run start   # production
-npm run check   # contrôle de syntaxe
+npm run check          # Syntaxe et cohérence des versions
+npm run build          # Graphe ESM, assets et manifeste ; sans transpilation
+npm test               # Tests unitaires, SQLite et HTTP isolés
+npm run test:browser    # Chrome local, Puppeteer, fournisseur Kyros synthétique
+npm run test:kyros      # Vrai code Kyros voisin + PostgreSQL local jetable
 ```
 
-## Branches et versions
+Pour Chrome, définir `CHROME_PATH` si l’exécutable n’est pas détecté dans le cache Puppeteer macOS. Le test réel utilise par défaut `../kyros`, configurable avec `KYROS_REPO`. Il exige les dépendances Kyros installées et le droit de créer/supprimer une base PostgreSQL locale de validation. Il ne modifie pas les comptes ou clients courants.
 
-- `prod` : version actuellement en production, conservée pendant la refonte.
-- `1.x.x` : développement de LUMA Hub V1, sans déploiement automatique en production.
-- Branches de fonctionnalités ou corrections facultatives, fusionnées vers `1.x.x` après validation.
+Captures et rapport navigateur dans `.impeccable/review/` (ignoré). Rapport réel Kyros dans `test/artifacts/kyros-real-contract.json` (ignoré). Bilan durable : [validation alpha](docs/VALIDATION_ALPHA2.md).
 
-Le numéro de version est défini **uniquement** dans `package.json`. Le fichier `VERSION` a été supprimé.
-Le chantier V1 est décrit dans [`docs/V1-ROADMAP.md`](docs/V1-ROADMAP.md).
+## Documentation et livraison
+
+- [Architecture, choix frontend et limites](docs/ARCHITECTURE_V1.md)
+- [Contrats Kyros et configuration du client local](docs/KYROS_CONTRACTS.md)
+- [Migration et repli](docs/MIGRATION_V1.md)
+- [Feuille de route V1](docs/V1-ROADMAP.md)
+- [Maquettes approuvées](docs/design/workspace-brief.md)
+
+Aucun déploiement, push, tag ou changement de `prod` n’est effectué par cette refonte locale. La progression reste alpha → beta → rc → stable après les validations requises.
