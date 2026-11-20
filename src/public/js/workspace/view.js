@@ -16,6 +16,7 @@ import {
   notice,
 } from "../ui.js";
 import { COMPOSITIONS, WIDGETS, CONNECTORS } from "./model.js";
+import { renderHarmonix, renderHarmonixSettings } from './harmonix-view.js';
 import { workspace, device, composition, layout } from "./store.js";
 import {
   renderDrivioVehicles,
@@ -118,6 +119,7 @@ function shortcutMarkup(widget) {
 }
 function widgetBody(widget) {
   switch (widget.type) {
+    case 'harmonix': return renderHarmonix();
     case "drivio-vehicles":
       return renderDrivioVehicles();
     case "drivio":
@@ -258,7 +260,7 @@ export function renderSettings() {
     )
     .join(
       "",
-    )}</div><p class="settings-note">Les widgets sont partagés dans l’espace personnel. Leur ordre et leurs tailles restent propres à chaque composition et à chaque format.</p></section><section class="settings-section"><h2>Widgets et données</h2><p>Les favoris restent dans Kyros. Les dispositions et configurations sont enregistrées dans le Hub. L’historique des accès reste sur cet appareil.</p><div class="settings-actions"><button class="btn" data-add-widget>${icon("plus")}Ajouter un widget</button><button class="btn" data-export-workspace>${icon("external")}Exporter ma configuration</button><a class="btn" href="#/">Organiser mon espace ${icon("arrow")}</a></div></section>${renderDrivioSettings()}<section class="settings-section"><h2>Connecteurs à venir</h2><p>Ces intégrations sont désactivées tant que leurs contrats ne sont pas validés.</p><ul class="connector-list">${CONNECTORS.filter(
+    )}</div><p class="settings-note">Les widgets sont partagés dans l’espace personnel. Leur ordre et leurs tailles restent propres à chaque composition et à chaque format.</p></section><section class="settings-section"><h2>Widgets et données</h2><p>Les favoris restent dans Kyros. Les dispositions et configurations sont enregistrées dans le Hub. L’historique des accès reste sur cet appareil.</p><div class="settings-actions"><button class="btn" data-add-widget>${icon("plus")}Ajouter un widget</button><button class="btn" data-export-workspace>${icon("external")}Exporter ma configuration</button><a class="btn" href="#/">Organiser mon espace ${icon("arrow")}</a></div></section>${renderDrivioSettings()}${renderHarmonixSettings()}<section class="settings-section"><h2>Connecteurs à venir</h2><p>Ces intégrations sont désactivées tant que leurs contrats ne sont pas validés.</p><ul class="connector-list">${CONNECTORS.filter(
     (c) => !c.available,
   )
     .map(

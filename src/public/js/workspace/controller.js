@@ -1,4 +1,5 @@
 import { icon, escapeHtml as e, toast } from "../ui.js";
+import { loadHarmonix, disconnectHarmonix } from './harmonix-client.js';
 import { openSearch } from "../search.js";
 import { WIDGETS, CONNECTORS, validateConfig } from "./model.js";
 import {
@@ -226,6 +227,9 @@ export function initWorkspace(render) {
     if (!button) return;
     const d = button.dataset;
     try {
+      if ('harmonixRefresh' in d) await loadHarmonix({force:true});
+      if ('harmonixAdd' in d) { addWidget('harmonix'); toast('Widget Harmonix ajouté'); }
+      if ('harmonixDisconnect' in d) { await disconnectHarmonix(); toast('Harmonix déconnecté du Hub'); }
       if ("openSearch" in d) openSearch();
       if ("addWidget" in d) showWidgetCatalog();
       if ("widgetAdd" in d) {

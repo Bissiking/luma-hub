@@ -24,7 +24,7 @@ export function openWorkspaceStore(filename) {
     const version =
       db.prepare("SELECT max(version) AS version FROM schema_migrations").get()
         .version || 0;
-    if (version > 2)
+    if (version > 3)
       throw new Error(
         "Schéma SQLite plus récent que ce runtime ; restauration du runtime requise.",
       );
@@ -51,6 +51,10 @@ export function openWorkspaceStore(filename) {
         2,
         new Date().toISOString(),
       );
+    }
+    if (version < 3) {
+      db.exec(fs.readFileSync(new URL('./migrations/003-harmonix-connector.sql',import.meta.url),'utf8'));
+      db.prepare('INSERT INTO schema_migrations VALUES (?, ?)').run(3,new Date().toISOString());
     }
   }).immediate();
   const read = db.prepare(
@@ -79,27 +83,27 @@ export function openWorkspaceStore(filename) {
         db.prepare("SELECT 1 FROM connector_secrets LIMIT 1").get(),
       );
     },
-    connection(userId) {
+    connection(userId, provider = 'drivio') {
       identity(userId, "personal");
       return (
         db
           .prepare(
             "SELECT sealed_token AS sealedToken, revision, connected_at AS connectedAt FROM connector_secrets WHERE user_id=? AND provider=?",
           )
-          .get(userId, "drivio") || null
+          .get(userId, provider) || null
       );
     },
-    saveConnection(userId, { sealedToken, revision, connectedAt }) {
+    saveConnection(userId, { sealedToken, revision, connectedAt }, provider = 'drivio') {
       identity(userId, "personal");
       db.prepare(
         "INSERT INTO connector_secrets VALUES (?, ?, ?, ?, ?) ON CONFLICT(user_id, provider) DO UPDATE SET sealed_token=excluded.sealed_token, revision=excluded.revision, connected_at=excluded.connected_at",
-      ).run(userId, "drivio", sealedToken, revision, connectedAt);
+      ).run(userId, provider, sealedToken, revision, connectedAt);
     },
-    removeConnection(userId) {
+    removeConnection(userId, provider = 'drivio') {
       identity(userId, "personal");
       db.prepare(
         "DELETE FROM connector_secrets WHERE user_id=? AND provider=?",
-      ).run(userId, "drivio");
+      ).run(userId, provider);
     },
     read(userId, spaceId = "personal") {
       identity(userId, spaceId);

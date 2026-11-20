@@ -18,6 +18,7 @@ import { initSearch, closeSearch } from "./js/search.js";
 import { toast, launchApp, icon } from "./js/ui.js";
 import { initWorkspace } from "./js/workspace/controller.js";
 import {initDrivio} from './js/workspace/drivio-client.js';
+import { initHarmonix } from './js/workspace/harmonix-client.js';
 import {
   loadWorkspace,
   workspace,
@@ -48,8 +49,12 @@ function render() {
       }
     : null;
   const y = scrollY;
+  const openWidgets = new Map([...view.querySelectorAll('details[data-widget]')].map(el => [el.dataset.widget,el.open]));
   state.route = route || "notfound";
   view.innerHTML = route ? ROUTES[route]() : renderNotFound();
+  if (!routeChanged && !workspace.editing) for (const el of view.querySelectorAll('details[data-widget]')) {
+    if (openWidgets.has(el.dataset.widget)) el.open = openWidgets.get(el.dataset.widget);
+  }
   document.body.dataset.composition = composition();
   document.body.dataset.catalogLayout = preferences().display?.layout || "grid";
   document.body.dataset.density =
@@ -218,6 +223,7 @@ async function start() {
   subscribe(() => render());
   await loadWorkspace();
   initDrivio(render);
+  initHarmonix(render);
   fetch("/health")
     .then((r) => r.json())
     .then((data) => {

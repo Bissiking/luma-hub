@@ -13,6 +13,7 @@ import { workspaceRoutes } from "./workspace/routes.js";
 import { WorkspaceError } from "./public/js/workspace/model.js";
 import { createDrivioConnector } from "./connectors/drivio.js";
 import { createDrivioAuthorization } from "./connectors/drivio-authorization.js";
+import { createHarmonixConnector } from './connectors/harmonix.js';
 import {
   createSession,
   getSession,
@@ -36,6 +37,7 @@ validateConfig();
 
 export const app = express();
 export const workspaceStore = openWorkspaceStore(config.workspaceDbPath);
+export const harmonixConnector = createHarmonixConnector({ store:workspaceStore, baseUrl:config.sonoraBaseUrl, harmonixUrl:config.harmonixBaseUrl, keyPath:config.connectorKeyPath, isProduction:config.isProduction });
 export const drivioConnector = createDrivioConnector({
   store: workspaceStore,
   baseUrl: config.drivioBaseUrl,
@@ -528,16 +530,20 @@ app.use(
     store: workspaceStore,
     drivio: drivioConnector,
     authorization: drivioAuthorization,
+    harmonix: harmonixConnector,
+    cookieName: config.cookieName,
     authenticate: async (req, res) => {
       if (
         req.method === "GET" &&
         [
           "/connectors/drivio/authorize",
           "/connectors/drivio/callback",
+          "/connectors/harmonix/authorize",
+          "/connectors/harmonix/callback",
         ].includes(req.path) &&
         !getSession(req.cookies[config.cookieName])
       ) {
-        res.redirect(303, "/#/personnaliser?drivio=failed");
+        res.redirect(303, `/#/personnaliser?${req.path.includes('/harmonix/') ? 'harmonix' : 'drivio'}=failed`);
         return null;
       }
       const entry = requestSession(req, res);

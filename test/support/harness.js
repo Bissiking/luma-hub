@@ -6,7 +6,7 @@ import os from "node:os";
 import path from "node:path";
 import { generateKeyPair, exportJWK, SignJWT } from "jose";
 
-export async function createHarness({ drivioBaseUrl = "" } = {}) {
+export async function createHarness({ drivioBaseUrl = "", sonoraBaseUrl = '', harmonixBaseUrl = '' } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "luma-http-validation-"));
   const provider = express();
   provider.use(express.json());
@@ -218,6 +218,8 @@ export async function createHarness({ drivioBaseUrl = "" } = {}) {
     HUB_DB_PATH: path.join(dir, "hub.sqlite"),
     HUB_CONNECTOR_KEY_PATH: path.join(dir, "connectors.key"),
     DRIVIO_BASE_URL: drivioBaseUrl,
+    SONORA_BASE_URL: sonoraBaseUrl,
+    HARMONIX_BASE_URL: harmonixBaseUrl,
     DOTENV_CONFIG_PATH: path.join(dir, "absent.env"),
   });
   const { app, workspaceStore, drivioConnector } =

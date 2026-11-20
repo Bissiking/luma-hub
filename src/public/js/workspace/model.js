@@ -23,6 +23,11 @@ export const COMPOSITIONS = Object.freeze({
 });
 
 export const WIDGETS = Object.freeze({
+  harmonix: {
+    name: 'Harmonix', description: 'Reprenez votre écoute et retrouvez les dernières sorties.', icon: 'music',
+    source: 'Sonora · bibliothèque autorisée', sizes: [1,2,3], permissions: ['tracks:read','playback:own'],
+    refresh: '5 minutes, à la demande', actions: ['refresh','open'], available: true,
+  },
   favorites: {
     name: "Favoris",
     description: "Vos applications favorites, conservées dans Kyros.",
@@ -141,8 +146,8 @@ export const CONNECTORS = Object.freeze([
     id: "harmonix",
     name: "Harmonix",
     description: "Musique et playlists",
-    available: false,
-    reason: "API et droits de lecture distante à valider.",
+    available: true,
+    reason: "Connexion Sonora par compte, lecture seule depuis le Hub.",
   },
   {
     id: "weather",

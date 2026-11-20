@@ -11,6 +11,8 @@ export function workspaceRoutes({
   authenticate,
   drivio,
   authorization,
+  harmonix,
+  cookieName,
 }) {
   const router = Router();
   router.use(async (req, res, next) => {
@@ -24,10 +26,12 @@ export function workspaceRoutes({
         [
           "/connectors/drivio/authorize",
           "/connectors/drivio/callback",
+          "/connectors/harmonix/authorize",
+          "/connectors/harmonix/callback",
         ].includes(req.path) &&
         !res.headersSent
       )
-        return res.redirect(303, "/#/personnaliser?drivio=failed");
+        return res.redirect(303, `/#/personnaliser?${req.path.includes('/harmonix/') ? 'harmonix' : 'drivio'}=failed`);
       next(error);
     }
   });
@@ -117,6 +121,26 @@ export function workspaceRoutes({
       });
     }),
   );
+  router.get('/connectors/harmonix/authorize', async (req,res,next) => {
+    res.set('Referrer-Policy','no-referrer');
+    try { res.redirect(303, await harmonix.start(req.workspaceUser,req.cookies[cookieName])); } catch { res.redirect(303,'/#/personnaliser?harmonix=failed'); }
+  });
+  router.get('/connectors/harmonix/callback', async (req,res) => {
+    let outcome = 'connected';
+    try { await harmonix.complete(req.workspaceUser,req.cookies[cookieName],new URL(req.originalUrl,'http://hub.invalid').searchParams); }
+    catch (error) { outcome = error.code === 'harmonix_account_mismatch' ? 'account_mismatch' : 'failed'; }
+    res.redirect(303, `/#/personnaliser?harmonix=${outcome}`);
+  });
+  router.get('/connectors/harmonix',connectorRoute(req => { query(req,[]); return harmonix.status(req.workspaceUser); }));
+  router.delete('/connectors/harmonix',connectorRoute(req => { query(req,[]); return harmonix.disconnect(req.workspaceUser); }));
+  router.get('/connectors/harmonix/music',connectorRoute(req => { query(req,[]); return harmonix.data(req.workspaceUser); }));
+  router.get('/connectors/harmonix/artwork/:id',async (req,res,next) => {
+    try {
+      query(req,[]);
+      const artwork = await harmonix.artwork(req.workspaceUser,req.params.id);
+      res.set({'Cache-Control':'private, no-store','Content-Type':artwork.type,'X-Content-Type-Options':'nosniff'}).send(artwork.bytes);
+    } catch(error) { next(error); }
+  });
   router.get("/widgets", (req, res) =>
     res.json({
       widgets: WIDGETS,
