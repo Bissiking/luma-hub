@@ -29,12 +29,12 @@ export function readConnectorKey(filename, { create = false } = {}) {
     );
   return key;
 }
-const aad = (userId) =>
-  Buffer.from(JSON.stringify(["luma-connectors", 1, "drivio", userId]));
-export function sealToken(token, userId, key) {
+const aad = (userId, provider = 'drivio') =>
+  Buffer.from(JSON.stringify(["luma-connectors", 1, provider, userId]));
+export function sealToken(token, userId, key, provider = 'drivio') {
   const iv = crypto.randomBytes(12),
     cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
-  cipher.setAAD(aad(userId));
+  cipher.setAAD(aad(userId, provider));
   const data = Buffer.concat([cipher.update(token, "utf8"), cipher.final()]);
   return [
     "v1",
@@ -43,7 +43,7 @@ export function sealToken(token, userId, key) {
     data.toString("base64url"),
   ].join(".");
 }
-export function openToken(sealed, userId, key) {
+export function openToken(sealed, userId, key, provider = 'drivio') {
   const [version, iv, tag, data, extra] = sealed.split(".");
   if (version !== "v1" || !iv || !tag || !data || extra)
     throw new Error("Secret chiffré invalide.");
@@ -52,7 +52,7 @@ export function openToken(sealed, userId, key) {
     key,
     Buffer.from(iv, "base64url"),
   );
-  decipher.setAAD(aad(userId));
+  decipher.setAAD(aad(userId, provider));
   decipher.setAuthTag(Buffer.from(tag, "base64url"));
   return Buffer.concat([
     decipher.update(Buffer.from(data, "base64url")),

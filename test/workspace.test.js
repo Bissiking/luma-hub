@@ -12,7 +12,7 @@ import {
 } from "../src/public/js/workspace/model.js";
 import { openWorkspaceStore } from "../src/workspace/repository.js";
 
-test("migration 001 vers 002 : document, révision et dates conservés après réouverture", (t) => {
+test("migration 001 vers 003 : document, révision et dates conservés après réouverture", (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "luma-upgrade-")),
     file = path.join(dir, "hub.sqlite");
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
@@ -172,7 +172,7 @@ test("SQLite persiste après réouverture, migre une seule fois et isole les com
   const raw = new Database(filename);
   assert.equal(
     raw.prepare("SELECT count(*) AS n FROM schema_migrations").get().n,
-    2,
+    3,
   );
   raw.close();
 });

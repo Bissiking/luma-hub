@@ -31,6 +31,8 @@ export const config = {
   workspaceDbPath: process.env.HUB_DB_PATH || "./data/hub.sqlite",
   connectorKeyPath: process.env.HUB_CONNECTOR_KEY_PATH || `${process.env.HUB_DB_PATH || './data/hub.sqlite'}.key`,
   drivioBaseUrl: process.env.DRIVIO_BASE_URL || (isProduction ? '' : 'http://localhost:3002'),
+  sonoraBaseUrl: process.env.SONORA_BASE_URL || (isProduction ? '' : 'http://localhost:6002'),
+  harmonixBaseUrl: process.env.HARMONIX_BASE_URL || (isProduction ? '' : 'http://localhost:5174'),
 
   kyrosBaseUrl,
   kyrosParUrl: process.env.KYROS_PAR_URL || `${kyrosBaseUrl}/par`,

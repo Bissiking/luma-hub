@@ -1,0 +1,10 @@
+{
+  "scope": "Actual Hub HTTP, temporary SQLite, synthetic Sonora and Kyros, Chrome; no real account or deployment",
+  "checks": [
+    "Connection via real Hub routes, account binding, protected artwork, resume link and no browser tokens",
+    "Rendered widget at 1440, 390 and 320 px in both system themes",
+    "Empty history/catalogue, denied resume and unavailable releases retain explicit independent states",
+    "Disconnect clears music and revokes the refresh session"
+  ],
+  "passed": true
+}
