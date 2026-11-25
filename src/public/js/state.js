@@ -7,7 +7,7 @@ export const state = {
   session: null,
   catalog: null, // {schemaVersion, revision, preferences, apps}
   context: null, // {context: {type, companyName, role, memberships, ...}}
-  route: "accueil"
+  route: "accueil",
 };
 
 const listeners = new Set();
@@ -37,6 +37,15 @@ export function contextInfo() {
   return state.context?.context || null;
 }
 
+export function catalogErrorText() {
+  const error = state.bootError;
+  if (error?.status === 403)
+    return error.code === "invalid_audience"
+      ? "La configuration du client Hub dans Kyros ne permet pas l’accès au catalogue. Faites vérifier son audience, puis reconnectez-vous."
+      : "Kyros refuse l’accès au catalogue. Faites vérifier les droits du client Hub, puis reconnectez-vous.";
+  return "Le catalogue Kyros est momentanément indisponible. Vos favoris restent conservés.";
+}
+
 export function apps() {
   return state.catalog?.apps || [];
 }
@@ -48,7 +57,7 @@ export function preferences() {
       pinned: [],
       hidden: [],
       order: [],
-      display: {}
+      display: {},
     }
   );
 }
@@ -72,7 +81,19 @@ export function isFavorite(id) {
 // Applications visibles (hidden appliqué côté affichage, jamais supprimé).
 export function visibleApps() {
   const hidden = hiddenIds();
-  return apps().filter((app) => !hidden.has(app.id));
+  const order = preferences().order || [];
+  const pinned = preferences().pinned || [];
+  return apps()
+    .filter((app) => !hidden.has(app.id))
+    .sort((a, b) => {
+      const rank = (id) =>
+        pinned.includes(id)
+          ? pinned.indexOf(id) - 1000
+          : order.includes(id)
+            ? order.indexOf(id)
+            : 1000;
+      return rank(a.id) - rank(b.id);
+    });
 }
 
 export function favoriteApps() {
@@ -90,12 +111,14 @@ export function findApp(id) {
 
 export async function toggleFavorite(id) {
   const current = preferences().favorites || [];
-  const next = current.includes(id) ? current.filter((x) => x !== id) : [...current, id];
+  const next = current.includes(id)
+    ? current.filter((x) => x !== id)
+    : [...current, id];
 
   try {
     const result = await api.patchPreferences({
       baseRevision: revision(),
-      preferences: { favorites: next }
+      preferences: { favorites: next },
     });
     if (state.catalog) {
       state.catalog.revision = result.revision;
@@ -112,7 +135,7 @@ export async function toggleFavorite(id) {
         "revision_conflict",
         "Vos préférences ont changé sur un autre appareil. Réessayez.",
         409,
-        error.data
+        error.data,
       );
     }
     throw error;
@@ -135,7 +158,16 @@ function recentsKey() {
 export function getRecents() {
   try {
     const raw = JSON.parse(localStorage.getItem(recentsKey()) || "[]");
-    return Array.isArray(raw) ? raw : [];
+    return Array.isArray(raw)
+      ? raw
+          .filter(
+            (entry) =>
+              entry &&
+              typeof entry.id === "string" &&
+              Number.isFinite(entry.openedAt),
+          )
+          .slice(0, 12)
+      : [];
   } catch {
     return [];
   }
@@ -155,7 +187,9 @@ export function recentItems() {
   return stored
     .map((entry) => {
       const fresh = findApp(entry.id);
-      return fresh ? { ...fresh, openedAt: entry.openedAt } : entry;
+      return fresh && Number.isFinite(entry.openedAt)
+        ? { ...fresh, openedAt: entry.openedAt }
+        : null;
     })
     .filter((entry) => entry && entry.id && entry.name);
 }
@@ -174,7 +208,7 @@ export function recordLaunch(app) {
     logoUrl: app.logoUrl || null,
     brandPrimaryColor: app.brandPrimaryColor || null,
     brandSecondaryColor: app.brandSecondaryColor || null,
-    openedAt: Date.now()
+    openedAt: Date.now(),
   });
   saveRecents(list);
   emit("recents");
@@ -198,7 +232,7 @@ export async function boot() {
   if (state.session.authenticated) {
     const [catalog, context] = await Promise.all([
       api.getCatalog().catch((error) => ({ error })),
-      api.getContext().catch(() => null)
+      api.getContext().catch(() => null),
     ]);
     state.catalog = catalog?.apps ? catalog : null;
     state.context = context;

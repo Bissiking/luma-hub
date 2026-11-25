@@ -1,16 +1,22 @@
 {
   "name": "luma-hub",
-  "version": "0.3.1-dev.2",
+  "version": "1.0.0-alpha.5",
   "description": "Portail principal LUMA pour mhemery.fr, connecté à Kyros (SSO v4).",
   "type": "module",
   "main": "src/server.js",
   "scripts": {
-    "dev": "nodemon src/server.js",
+    "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "check": "node --check src/server.js && node --check src/config.js && node --check src/sso.js && node --check src/session.js && node --check src/public/app.js && node --check src/public/js/api.js && node --check src/public/js/state.js && node --check src/public/js/ui.js && node --check src/public/js/views.js && node --check src/public/js/search.js",
-    "test": "node --test"
+    "check": "node scripts/check.mjs",
+    "test": "node --test test/*.test.js",
+    "build": "node scripts/build.mjs",
+    "test:browser": "node scripts/browser-test.mjs",
+    "test:kyros": "node scripts/kyros-contract-test.mjs",
+    "test:drivio": "node scripts/drivio-contract-test.mjs",
+    "test:harmonix": "node scripts/harmonix-browser-test.mjs"
   },
   "dependencies": {
+    "better-sqlite3": "^12.11.1",
     "cookie-parser": "^1.4.7",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
@@ -18,10 +24,13 @@
     "jose": "^6.2.13",
     "morgan": "^1.10.0"
   },
-  "devDependencies": {
-    "nodemon": "^3.1.9"
-  },
   "engines": {
     "node": ">=20"
+  },
+  "allowScripts": {
+    "better-sqlite3@12.11.1": true
+  },
+  "devDependencies": {
+    "puppeteer-core": "^25.18.1"
   }
 }
