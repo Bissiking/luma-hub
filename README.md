@@ -78,6 +78,7 @@ Captures et rapport navigateur dans `.impeccable/review/` (ignoré). Rapport ré
 
 ## Documentation et livraison
 
+- [Catalogue de projets : accès, import privé et utilisation](docs/PROJECT-CATALOGUE.md)
 - [Architecture, choix frontend et limites](docs/ARCHITECTURE_V1.md)
 - [Contrats Kyros et configuration du client local](docs/KYROS_CONTRACTS.md)
 - [Migration et repli](docs/MIGRATION_V1.md)

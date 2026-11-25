@@ -12,6 +12,7 @@ import {
   kyrosUrl,
   preferences,
 } from "./js/state.js";
+import { initProjects } from "./js/projects/view.js";
 import * as api from "./js/api.js";
 import { ROUTES, routeFromHash, renderNotFound } from "./js/views.js";
 import { initSearch, closeSearch } from "./js/search.js";
@@ -31,20 +32,24 @@ const view = document.getElementById("view");
 const titles = {
   accueil: "Workspace",
   applications: "Applications",
+  projets: "Projets LUMA",
   favoris: "Favoris",
   recents: "Récents",
   personnaliser: "Personnaliser",
 };
 let previousRoute;
+let previousHash;
 function render() {
   if (!isAuthenticated()) return;
   const route = routeFromHash(location.hash),
-    routeChanged = route !== previousRoute;
+    routeChanged = route !== previousRoute || (route === "projets" && location.hash !== previousHash);
   const focus = view.contains(document.activeElement)
     ? {
         id: document.activeElement.id,
         name: document.activeElement.name,
         value: document.activeElement.value,
+        selectionStart: document.activeElement.selectionStart,
+        selectionEnd: document.activeElement.selectionEnd,
         dataset: { ...document.activeElement.dataset },
       }
     : null;
@@ -93,9 +98,11 @@ function render() {
                 ),
       );
       target?.focus({ preventScroll: true });
+      if (target?.setSelectionRange && Number.isInteger(focus.selectionStart)) target.setSelectionRange(focus.selectionStart, focus.selectionEnd);
     }
   }
   previousRoute = route;
+  previousHash = location.hash;
 }
 function fillAccount() {
   const user = state.session.user,
@@ -206,6 +213,7 @@ async function start() {
   initSearch();
   bindEvents();
   initWorkspace(render);
+  initProjects(render);
   try {
     await boot();
   } catch {
