@@ -3,7 +3,7 @@ node_modules/
 .env
 npm-debug.log*
 .DS_Store
-data/
+data/*.sqlite*
 .impeccable/review/
 test/artifacts/
 .impeccable/hook.cache.json
