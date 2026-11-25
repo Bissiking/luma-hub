@@ -1,0 +1,56 @@
+.project-context { margin: 0 0 28px; border-bottom: 1px solid var(--line); padding-bottom: 18px; }
+.project-context summary, .project-sources summary { cursor: pointer; color: var(--accent); padding: 8px 0; font-weight: 600; }
+.project-context dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin: 16px 0; }
+.project-context dt { font-weight: 600; margin-bottom: 6px; }
+.project-context dd { margin: 0; color: var(--text-2); }
+.project-context p, .project-secondary, .project-footnote { color: var(--muted); }
+.project-filters { display: flex; align-items: end; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; }
+.project-filters label { display: flex; flex-direction: column; gap: 7px; flex: 1 1 160px; font-size: 0.875rem; font-weight: 600; }
+.project-filters .project-query { flex: 2 1 240px; }
+.project-filters input, .project-filters select { width: 100%; min-width: 0; min-height: 44px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--panel); padding: 10px 12px; font-weight: 400; }
+.project-filters select { appearance: none; padding-right: 32px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%235d6d70' stroke-width='1.5'/%3E%3C/svg%3E"); background-size: 16px; background-position: right 10px center; background-repeat: no-repeat; }
+.project-filters input::placeholder { color: var(--muted); }
+.project-results-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; min-height: 44px; color: var(--muted); }
+.project-list { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--line); }
+.project-list li { border-bottom: 1px solid var(--line); }
+.project-row { display: flex; gap: 24px; align-items: center; justify-content: space-between; padding: 22px 12px; border-radius: 6px; }
+.project-row:hover { background: var(--surface); }
+.project-row h2 { font-size: 1.125rem; color: var(--accent); margin-bottom: 6px; }
+.project-row-copy { min-width: 0; }
+.project-row p { max-width: 74ch; color: var(--text-2); overflow-wrap: anywhere; font-size: 1rem; }
+.project-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.project-tag { padding: 3px 7px; border-radius: 5px; background: var(--surface); color: var(--text-2); font-size: 0.875rem; }
+.project-open { display: flex; align-items: center; gap: 8px; flex: none; color: var(--muted); font-size: 0.875rem; }
+.project-footnote { margin-top: 24px; font-size: 0.875rem; }
+.project-breadcrumb { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 24px; color: var(--muted); font-size: 0.875rem; }
+.project-breadcrumb a, .project-related a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.project-detail-layout { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr); gap: 40px; margin-top: 32px; }
+.project-facts h2, .project-documentation h2 { margin-bottom: 16px; }
+.project-facts dl { margin: 0; }
+.project-facts dl > div { border-bottom: 1px solid var(--line); padding: 12px 0; }
+.project-facts dt { color: var(--muted); font-size: 0.875rem; }
+.project-facts dd { margin: 5px 0 0; overflow-wrap: anywhere; }
+.project-documentation { min-width: 0; }
+.project-documentation section { margin-bottom: 32px; }
+.project-documentation p { max-width: 74ch; font-size: 1rem; overflow-wrap: anywhere; }
+.project-documentation p + p { margin-top: 12px; }
+.project-documentation .project-secondary { font-size: 0.875rem; }
+.project-source { display: inline-flex; gap: 6px; align-items: center; color: var(--accent); text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
+.project-source .icon { flex: none; height: 16px; width: 16px; }
+.project-repositories, .project-related, .project-sources ul { list-style: none; padding: 0; margin: 0; }
+.project-repositories li + li, .project-sources li + li, .project-related li + li { margin-top: 16px; }
+.project-repositories p { color: var(--muted); font-size: 0.875rem; margin-top: 6px; }
+.project-note { max-width: 74ch; margin-top: 20px; color: var(--text-2); font-size: 1rem; }
+.project-back { margin-top: 24px; }
+.project-loading { padding: 32px 0; }
+.project-loading .btn { margin-top: 16px; }
+@media (max-width: 700px) {
+  .project-context dl, .project-detail-layout { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .project-filters { gap: 12px; }
+  .project-filters .project-query { flex-basis: 100%; }
+  .project-filters label { flex-basis: 140px; }
+  .project-row { align-items: start; padding: 20px 0; gap: 12px; }
+  .project-open { font-size: 0; }
+  .project-open .icon { width: 20px; height: 20px; }
+  .project-source { min-height: 44px; }
+}

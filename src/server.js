@@ -28,6 +28,8 @@ import {
   oauthBindingCookieOptions,
 } from "./session.js";
 
+import { readProjectCatalogue } from "./projects/catalogue.js";
+
 import pkg from "../package.json" with { type: "json" };
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, "public");
@@ -496,6 +498,57 @@ app.get("/api/session", async (req, res) => {
   });
 });
 
+async function authenticatedSubject(req, res) {
+  const entry = requestSession(req, res);
+  if (!entry) return null;
+  let session = await ensureFreshTokens(entry.token, entry.session);
+  let response = await kyrosCall(config.kyrosMeUrl, {
+    accessToken: session.accessToken,
+  });
+  if (response.status === 401 && session.refreshToken) {
+    await refreshSession(entry.token, session);
+    session = getSession(entry.token);
+    if (!session)
+      throw new sso.SsoError("session_expired", "Session expirée.", 401);
+    response = await kyrosCall(config.kyrosMeUrl, {
+      accessToken: session.accessToken,
+    });
+  }
+  if (!response.ok) {
+    if (response.status === 401) destroySession(entry.token);
+    throw new sso.SsoError(
+      "identity_unavailable",
+      "Votre identité Kyros ne peut pas être vérifiée. Réessayez.",
+      response.status >= 500 ? 503 : response.status,
+    );
+  }
+  const identity = await response.json();
+  if (identity?.id !== session.claims.sub) {
+    destroySession(entry.token);
+    throw new sso.SsoError(
+      "identity_mismatch",
+      "Identité Kyros incohérente.",
+      401,
+    );
+  }
+  return session.claims.sub;
+}
+
+app.get("/api/projects", async (req, res) => {
+  try {
+    if (!await authenticatedSubject(req, res)) return;
+    let catalogue;
+    try {
+      catalogue = await readProjectCatalogue(config.projectCataloguePath);
+    } catch {
+      return res.status(503).json({ error: "project_catalogue_unavailable", message: "Le catalogue de projets est indisponible." });
+    }
+    res.json(catalogue);
+  } catch (error) {
+    handleApiError(res, error);
+  }
+});
+
 app.get("/api/me", (req, res) => proxyToKyros(req, res, config.kyrosMeUrl));
 app.get("/api/context", (req, res) =>
   proxyToKyros(req, res, config.kyrosContextUrl),
@@ -546,39 +599,7 @@ app.use(
         res.redirect(303, `/#/personnaliser?${req.path.includes('/harmonix/') ? 'harmonix' : 'drivio'}=failed`);
         return null;
       }
-      const entry = requestSession(req, res);
-      if (!entry) return null;
-      let session = await ensureFreshTokens(entry.token, entry.session);
-      let response = await kyrosCall(config.kyrosMeUrl, {
-        accessToken: session.accessToken,
-      });
-      if (response.status === 401 && session.refreshToken) {
-        await refreshSession(entry.token, session);
-        session = getSession(entry.token);
-        if (!session)
-          throw new sso.SsoError("session_expired", "Session expirée.", 401);
-        response = await kyrosCall(config.kyrosMeUrl, {
-          accessToken: session.accessToken,
-        });
-      }
-      if (!response.ok) {
-        if (response.status === 401) destroySession(entry.token);
-        throw new sso.SsoError(
-          "identity_unavailable",
-          "Votre identité Kyros ne peut pas être vérifiée. Réessayez.",
-          response.status >= 500 ? 503 : response.status,
-        );
-      }
-      const identity = await response.json();
-      if (identity?.id !== session.claims.sub) {
-        destroySession(entry.token);
-        throw new sso.SsoError(
-          "identity_mismatch",
-          "Identité Kyros incohérente.",
-          401,
-        );
-      }
-      return session.claims.sub;
+      return authenticatedSubject(req, res);
     },
   }),
 );

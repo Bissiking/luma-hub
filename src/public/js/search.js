@@ -11,6 +11,7 @@ import {
 } from "./ui.js";
 
 const PAGES = [
+  { route: "projets", label: "Projets LUMA", hint: "Projets, composants et archives", icon: "layers", keywords: "projets luma groupe divisions composants archives" },
   {
     route: "personnaliser",
     label: "Personnaliser",
