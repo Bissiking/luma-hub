@@ -1,6 +1,6 @@
 {
   "name": "luma-hub",
-  "version": "1.0.0-alpha.5",
+  "version": "1.0.0-alpha.6",
   "description": "Portail principal LUMA pour mhemery.fr, connecté à Kyros (SSO v4).",
   "type": "module",
   "main": "src/server.js",
@@ -13,7 +13,9 @@
     "test:browser": "node scripts/browser-test.mjs",
     "test:kyros": "node scripts/kyros-contract-test.mjs",
     "test:drivio": "node scripts/drivio-contract-test.mjs",
-    "test:harmonix": "node scripts/harmonix-browser-test.mjs"
+    "test:harmonix": "node scripts/harmonix-browser-test.mjs",
+    "test:projects": "node scripts/projects-browser-test.mjs",
+    "catalogue:import": "node scripts/import-projects.mjs"
   },
   "dependencies": {
     "better-sqlite3": "^12.11.1",

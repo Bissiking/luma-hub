@@ -46,6 +46,7 @@ function catalogNotice() {
 // --------------------------------------------------------------- Accueil
 
 export { renderWorkspace as renderHome } from "./workspace/view.js";
+import { renderProjects } from "./projects/view.js";
 import { renderWorkspace, renderSettings } from "./workspace/view.js";
 
 // --------------------------------------------------------------- Applications
@@ -79,6 +80,7 @@ export function renderApplications() {
         <p>Toutes les applications auxquelles votre compte a accès, filtrées par Kyros selon vos droits.</p>
       </div>
       <span class="page-count" title="Applications accessibles">${list.length}</span>
+      <a class="btn" href="#/projets">${icon("layers")}Projets LUMA</a>
     </header>
 
     ${catalogNotice()}
@@ -198,6 +200,7 @@ export const ROUTES = {
   accueil: renderWorkspace,
   personnaliser: renderSettings,
   applications: renderApplications,
+  projets: renderProjects,
   favoris: renderFavorites,
   recents: renderRecents,
 };

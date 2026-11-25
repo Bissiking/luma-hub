@@ -28,6 +28,7 @@ export const config = {
   ),
   sessionTtlMs: Number(process.env.SESSION_TTL_HOURS || 12) * 60 * 60 * 1000,
   cookieName: "luma_hub_session",
+  projectCataloguePath: process.env.HUB_PROJECT_CATALOGUE_PATH || "./data/project-catalogue.json",
   workspaceDbPath: process.env.HUB_DB_PATH || "./data/hub.sqlite",
   connectorKeyPath: process.env.HUB_CONNECTOR_KEY_PATH || `${process.env.HUB_DB_PATH || './data/hub.sqlite'}.key`,
   drivioBaseUrl: process.env.DRIVIO_BASE_URL || (isProduction ? '' : 'http://localhost:3002'),
